@@ -1,10 +1,6 @@
-Of course. A good project needs great documentation.
+# GlitchizUI v2.0 - Documentation
 
-Here is a comprehensive README.md file. This is the standard format for project documentation on platforms like GitHub. You can copy this entire text and save it as a file named README.md in your GitHub repository, and it will automatically be displayed as the project's homepage.
-
-GlitchizUI v2.0 - Documentation
-
-Welcome to the official documentation for GlitchizUI v2.0. This is a modern, feature-rich, and highly customizable UI library for Roblox, designed with a stylish "glitch" aesthetic. Its API is inspired by popular libraries like Rayfield, making it intuitive and easy to learn.
+`` Welcome to the official documentation for GlitchizUI v2.0. This is a modern, feature-rich, and highly customizable UI library for Roblox, designed with a stylish "glitch" aesthetic. Its API is inspired by popular libraries like Rayfield, making it intuitive and easy to learn.
 
 This guide will walk you through the setup process and provide a detailed reference for every available UI element.
 
@@ -34,15 +30,10 @@ Full Example Script
 
 Setup & Installation
 
-GlitchizUI is designed to be loaded directly from its source code on GitHub. This means you don't need to install any files; you just run a small loader script.
+GlitchizUI is designed to be loaded directly from its source code on GitHub. This means you don't need to install any files; you just run a small loader script. ``
 
 Simply use the following script to load the library and create your UI.
 
-code
-Lua
-download
-content_copy
-expand_less
 -- ==========================================================
 -- GlitchizUI Loader
 -- This script will fetch and run the latest version of the UI.
