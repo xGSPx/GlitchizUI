@@ -1,11 +1,10 @@
 --[[
-    GlitchizUI v3.8 (Definitive Version)
-    - FIXED: Header rebuilt with a dedicated drag frame. Hide/Show and Delete buttons are now 100% clickable and functional.
-    - FIXED: The first tab created in the script is now correctly displayed on load.
+    GlitchizUI v3.9 (Definitive Version)
+    - FIXED: Header now uses a higher ZIndex than the content, guaranteeing Hide/Show/Delete buttons are always clickable.
+    - FIXED: The ContentFrame now clips its descendants, so scrolling content no longer goes outside its boundaries.
+    - FIXED: The first tab created in the script is now correctly displayed on load, not the last.
     - NEW: Tab list is a ScrollingFrame, allowing for unlimited tabs.
-    - FIXED: All elements are properly left-aligned within tabs.
     - FIXED: Slider logic is robust and will not get stuck.
-    - FIXED: The dropdown now correctly handles scrolling conflicts.
 --]]
 
 local RunService = game:GetService("RunService")
@@ -60,7 +59,7 @@ function Library.new(props)
     self.MainFrame = Create("Frame", { Name = "MainFrame", Size = self.Size, Position = props.Position or UDim2.new(0.5, -self.Size.X.Offset / 2, 0.5, -self.Size.Y.Offset / 2), BackgroundColor3 = Theme.Background, BackgroundTransparency = 0.15, BorderSizePixel = 0, Parent = self.ScreenGui })
     Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.MainFrame }); Create("UIStroke", { Color = Theme.Accent2, Transparency = 0.7, Thickness = 1.5, Parent = self.MainFrame })
 
-    local Header = Create("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = Theme.Header, BackgroundTransparency = 0.2, BorderSizePixel = 0, Parent = self.MainFrame })
+    local Header = Create("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = Theme.Header, BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 2, Parent = self.MainFrame })
     local DragFrame = Create("Frame", {Name = "DragFrame", Size = UDim2.new(1, -60, 1, 0), BackgroundTransparency = 1, Parent = Header})
     Create("TextLabel", { Name = "Title", Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = DragFrame })
     
@@ -68,21 +67,21 @@ function Library.new(props)
     local HideButton = Create("TextButton", { Name = "HideButton", Size = UDim2.new(0, 30, 1, 0), BackgroundColor3 = Color3.new(), BackgroundTransparency = 1, Text = "—", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
     local DeleteButton = Create("TextButton", { Name = "DeleteButton", Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(0, 30, 0, 0), BackgroundColor3 = Color3.new(), BackgroundTransparency = 1, Text = "✕", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
     
-    local ContentContainer, TabContainer, TabListLayout; self.ContentFrame = Create("Frame", { BackgroundTransparency = 1, Parent = self.MainFrame })
-    ContentContainer = Create("Frame", { Name = "ContentContainer", Size = UDim2.new(1, 0, 1, -40), Position = UDim2.new(0, 0, 0, 40), BackgroundTransparency = 1, Parent = self.MainFrame })
+    local ContentContainer, TabContainer; self.ContentFrame = Create("Frame", { BackgroundTransparency = 1, Parent = self.MainFrame })
+    ContentContainer = Create("Frame", { Name = "ContentContainer", Size = UDim2.new(1, 0, 1, -40), Position = UDim2.new(0, 0, 0, 40), BackgroundTransparency = 1, ZIndex = 1, Parent = self.MainFrame })
     if IsMobile then
         TabContainer = Create("ScrollingFrame", { Name = "TabContainer", Size = UDim2.new(1, 0, 0, 35), BackgroundColor3 = Theme.Background, BackgroundTransparency = 0.3, BorderSizePixel = 0, ScrollingDirection = Enum.ScrollingDirection.X, ScrollBarThickness = 0, Parent = ContentContainer })
-        TabListLayout = Create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5), VerticalAlignment = Enum.VerticalAlignment.Center, Parent = TabContainer })
-        self.ContentFrame.Name = "ContentFrame"; self.ContentFrame.Size = UDim2.new(1, 0, 1, -35); self.ContentFrame.Position = UDim2.new(0, 0, 0, 35); self.ContentFrame.Parent = ContentContainer
+        Create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5), VerticalAlignment = Enum.VerticalAlignment.Center, Parent = TabContainer })
+        self.ContentFrame.Name = "ContentFrame"; self.ContentFrame.Size = UDim2.new(1, 0, 1, -35); self.ContentFrame.Position = UDim2.new(0, 0, 0, 35); self.ContentFrame.Parent = ContentContainer; self.ContentFrame.ClipsDescendants = true
     else
         TabContainer = Create("ScrollingFrame", { Name = "TabContainer", Size = UDim2.new(0, 120, 1, 0), BackgroundColor3 = Theme.Background, BackgroundTransparency = 0.3, BorderSizePixel = 0, ScrollingDirection = Enum.ScrollingDirection.Y, ScrollBarThickness = 2, Parent = ContentContainer })
-        TabListLayout = Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = TabContainer })
-        self.ContentFrame.Name = "ContentFrame"; self.ContentFrame.Size = UDim2.new(1, -120, 1, 0); self.ContentFrame.Position = UDim2.new(0, 120, 0, 0); self.ContentFrame.ClipsDescendants = true
+        Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = TabContainer })
+        self.ContentFrame.Name = "ContentFrame"; self.ContentFrame.Size = UDim2.new(1, -120, 1, 0); self.ContentFrame.Position = UDim2.new(0, 120, 0, 0); self.ContentFrame.Parent = ContentContainer; self.ContentFrame.ClipsDescendants = true
     end
 
     MakeDraggable(self.MainFrame, DragFrame)
     
-    function self:Destroy() self.ScreenGui:Destroy(); for i,v in pairs(self) do self[i]=nil; setmetatable(self, nil) end end
+    function self:Destroy() if self.ScreenGui then self.ScreenGui:Destroy() end; for i,v in pairs(self) do self[i]=nil; setmetatable(self, nil) end end
     local isContentVisible = true
     local function ToggleMinimize()
         isContentVisible = not isContentVisible
