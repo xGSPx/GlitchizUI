@@ -1,9 +1,10 @@
 --[[
-    GlitchizUI v3.7 (Definitive Bugfix Version)
-    - FIXED: The main title label's frame no longer covers the Hide/Delete buttons, making them fully clickable. This was the critical layout bug.
-    - FIXED: All elements are now properly left-aligned within tabs.
+    GlitchizUI v3.8 (Definitive Version)
+    - FIXED: Header rebuilt with a dedicated drag frame. Hide/Show and Delete buttons are now 100% clickable and functional.
+    - FIXED: The first tab created in the script is now correctly displayed on load.
+    - NEW: Tab list is a ScrollingFrame, allowing for unlimited tabs.
+    - FIXED: All elements are properly left-aligned within tabs.
     - FIXED: Slider logic is robust and will not get stuck.
-    - NEW: The tab list is now a ScrollingFrame, allowing for unlimited tabs.
     - FIXED: The dropdown now correctly handles scrolling conflicts.
 --]]
 
@@ -60,11 +61,12 @@ function Library.new(props)
     Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.MainFrame }); Create("UIStroke", { Color = Theme.Accent2, Transparency = 0.7, Thickness = 1.5, Parent = self.MainFrame })
 
     local Header = Create("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = Theme.Header, BackgroundTransparency = 0.2, BorderSizePixel = 0, Parent = self.MainFrame })
-    Create("TextLabel", { Name = "Title", Size = UDim2.new(0, 350, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Active = false, Parent = Header })
+    local DragFrame = Create("Frame", {Name = "DragFrame", Size = UDim2.new(1, -60, 1, 0), BackgroundTransparency = 1, Parent = Header})
+    Create("TextLabel", { Name = "Title", Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = DragFrame })
     
     local Controls = Create("Frame", { Name = "Controls", Size = UDim2.new(0, 60, 1, 0), Position = UDim2.new(1, -60, 0, 0), BackgroundTransparency = 1, Parent = Header })
-    local HideButton = Create("TextButton", { Name = "HideButton", Size = UDim2.new(0, 30, 1, 0), BackgroundColor3 = Theme.Header, Text = "—", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
-    local DeleteButton = Create("TextButton", { Name = "DeleteButton", Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(0, 30, 0, 0), BackgroundColor3 = Theme.Header, Text = "✕", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
+    local HideButton = Create("TextButton", { Name = "HideButton", Size = UDim2.new(0, 30, 1, 0), BackgroundColor3 = Color3.new(), BackgroundTransparency = 1, Text = "—", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
+    local DeleteButton = Create("TextButton", { Name = "DeleteButton", Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(0, 30, 0, 0), BackgroundColor3 = Color3.new(), BackgroundTransparency = 1, Text = "✕", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
     
     local ContentContainer, TabContainer, TabListLayout; self.ContentFrame = Create("Frame", { BackgroundTransparency = 1, Parent = self.MainFrame })
     ContentContainer = Create("Frame", { Name = "ContentContainer", Size = UDim2.new(1, 0, 1, -40), Position = UDim2.new(0, 0, 0, 40), BackgroundTransparency = 1, Parent = self.MainFrame })
@@ -78,7 +80,7 @@ function Library.new(props)
         self.ContentFrame.Name = "ContentFrame"; self.ContentFrame.Size = UDim2.new(1, -120, 1, 0); self.ContentFrame.Position = UDim2.new(0, 120, 0, 0); self.ContentFrame.ClipsDescendants = true
     end
 
-    MakeDraggable(self.MainFrame, Header)
+    MakeDraggable(self.MainFrame, DragFrame)
     
     function self:Destroy() self.ScreenGui:Destroy(); for i,v in pairs(self) do self[i]=nil; setmetatable(self, nil) end end
     local isContentVisible = true
@@ -109,8 +111,9 @@ function Library.new(props)
             self.CurrentTab = Tab; isTweeningTab = false
         end)
         
-        if self.CurrentTab then self.CurrentTab.Frame.Visible = false; self.CurrentTab.Button.BackgroundColor3 = Theme.Header; self.CurrentTab.Indicator.Visible = false end
-        Tab.Button.BackgroundColor3 = Theme.Accent; Tab.Indicator.Visible = true; Tab.Frame.Visible = true; Tab.Frame.Position = UDim2.new(0,0,0,0); self.CurrentTab = Tab
+        if not self.CurrentTab then
+            Tab.Button.BackgroundColor3 = Theme.Accent; Tab.Indicator.Visible = true; Tab.Frame.Visible = true; Tab.Frame.Position = UDim2.new(0,0,0,0); self.CurrentTab = Tab
+        end
         self.Tabs[name] = Tab; return self
     end
     
