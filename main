@@ -1,11 +1,10 @@
 --[[
-    GlitchizUI v3.6 (Definitive Version)
-    - FIXED: Hide/Show and Delete buttons are now fully functional.
-    - FIXED: All elements are now properly left-aligned within tabs, removing the title offset bug.
-    - FIXED: Slider logic was completely rebuilt to be robust and smooth. It will no longer get stuck.
-    - NEW: The tab list is now a ScrollingFrame, allowing for unlimited tabs on both PC and Mobile.
-    - FIXED: The title text no longer interferes with dragging the header.
-    - FIXED: The dropdown now disables the main scrollbar when open, preventing scroll conflicts.
+    GlitchizUI v3.7 (Definitive Bugfix Version)
+    - FIXED: The main title label's frame no longer covers the Hide/Delete buttons, making them fully clickable. This was the critical layout bug.
+    - FIXED: All elements are now properly left-aligned within tabs.
+    - FIXED: Slider logic is robust and will not get stuck.
+    - NEW: The tab list is now a ScrollingFrame, allowing for unlimited tabs.
+    - FIXED: The dropdown now correctly handles scrolling conflicts.
 --]]
 
 local RunService = game:GetService("RunService")
@@ -61,7 +60,7 @@ function Library.new(props)
     Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.MainFrame }); Create("UIStroke", { Color = Theme.Accent2, Transparency = 0.7, Thickness = 1.5, Parent = self.MainFrame })
 
     local Header = Create("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = Theme.Header, BackgroundTransparency = 0.2, BorderSizePixel = 0, Parent = self.MainFrame })
-    Create("TextLabel", { Name = "Title", Size = UDim2.new(1, -80, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Active = false, Parent = Header })
+    Create("TextLabel", { Name = "Title", Size = UDim2.new(0, 350, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Active = false, Parent = Header })
     
     local Controls = Create("Frame", { Name = "Controls", Size = UDim2.new(0, 60, 1, 0), Position = UDim2.new(1, -60, 0, 0), BackgroundTransparency = 1, Parent = Header })
     local HideButton = Create("TextButton", { Name = "HideButton", Size = UDim2.new(0, 30, 1, 0), BackgroundColor3 = Theme.Header, Text = "—", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
