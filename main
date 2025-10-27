@@ -1,9 +1,9 @@
 --[[
-    GlitchizUI v3.4 (Final Polished Version)
-    - FIXED: Elements are now correctly parented to their respective tabs during script execution.
-    - FIXED: Added top padding to the content area for better visual layout.
+    GlitchizUI v3.5 (Definitive Version)
+    - FIXED: Slider logic was completely rebuilt to be robust and smooth. It will no longer get stuck.
+    - NEW: The tab list is now a ScrollingFrame, allowing for unlimited tabs on both PC and Mobile.
+    - FIXED: All elements are now properly left-aligned within tabs, removing the weird title offsets.
     - FIXED: The title text no longer interferes with dragging the header.
-    - FIXED: The slider is now fully functional with smooth handle animation.
     - FIXED: The dropdown now disables the main scrollbar when open, preventing scroll conflicts.
 --]]
 
@@ -67,14 +67,13 @@ function Library.new(props)
     local DeleteButton = Create("TextButton", { Name = "DeleteButton", Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(0, 30, 0, 0), BackgroundColor3 = Theme.Header, Text = "✕", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
     
     local ContentContainer, TabContainer, TabListLayout; self.ContentFrame = Create("Frame", { BackgroundTransparency = 1, Parent = self.MainFrame })
+    ContentContainer = Create("Frame", { Name = "ContentContainer", Size = UDim2.new(1, 0, 1, -40), Position = UDim2.new(0, 0, 0, 40), BackgroundTransparency = 1, Parent = self.MainFrame })
     if IsMobile then
-        ContentContainer = Create("Frame", { Name = "ContentContainer", Size = UDim2.new(1, 0, 1, -40), Position = UDim2.new(0, 0, 0, 40), BackgroundTransparency = 1, Parent = self.MainFrame })
         TabContainer = Create("ScrollingFrame", { Name = "TabContainer", Size = UDim2.new(1, 0, 0, 35), BackgroundColor3 = Theme.Background, BackgroundTransparency = 0.3, BorderSizePixel = 0, ScrollingDirection = Enum.ScrollingDirection.X, ScrollBarThickness = 0, Parent = ContentContainer })
         TabListLayout = Create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5), VerticalAlignment = Enum.VerticalAlignment.Center, Parent = TabContainer })
         self.ContentFrame.Name = "ContentFrame"; self.ContentFrame.Size = UDim2.new(1, 0, 1, -35); self.ContentFrame.Position = UDim2.new(0, 0, 0, 35); self.ContentFrame.Parent = ContentContainer
     else
-        ContentContainer = Create("Frame", { Name = "ContentContainer", Size = UDim2.new(1, 0, 1, -40), Position = UDim2.new(0, 0, 0, 40), BackgroundTransparency = 1, Parent = self.MainFrame })
-        TabContainer = Create("Frame", { Name = "TabContainer", Size = UDim2.new(0, 120, 1, 0), BackgroundColor3 = Theme.Background, BackgroundTransparency = 0.3, BorderSizePixel = 0, Parent = ContentContainer })
+        TabContainer = Create("ScrollingFrame", { Name = "TabContainer", Size = UDim2.new(0, 120, 1, 0), BackgroundColor3 = Theme.Background, BackgroundTransparency = 0.3, BorderSizePixel = 0, ScrollingDirection = Enum.ScrollingDirection.Y, ScrollBarThickness = 2, Parent = ContentContainer })
         TabListLayout = Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = TabContainer })
         self.ContentFrame.Name = "ContentFrame"; self.ContentFrame.Size = UDim2.new(1, -120, 1, 0); self.ContentFrame.Position = UDim2.new(0, 120, 0, 0); self.ContentFrame.ClipsDescendants = true
     end
@@ -89,11 +88,11 @@ function Library.new(props)
     
     local isTweeningTab = false
     function self:AddTab(name)
-        local Tab = { ElementOffset = 0 } -- Start at 0 for padding
+        local Tab = { ElementOffset = 0 }
         local buttonSize = IsMobile and UDim2.new(0, 100, 1, -10) or UDim2.new(1, -10, 0, 30)
         Tab.Button = Create("TextButton", { Name = name, Size = buttonSize, Text = name, Font = Theme.BoldFont, TextSize = Theme.TextSize, TextColor3 = Theme.Text, BackgroundColor3 = Theme.Header, BorderSizePixel = 0, LayoutOrder = #self.Tabs + 1, Parent = TabContainer }); Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = Tab.Button })
         Tab.Indicator = Create("Frame", { Name = "Indicator", Size = UDim2.new(IsMobile and 0.6 or 0, IsMobile and 0 or 3, IsMobile and 0 or 0.6, IsMobile and 3 or 0), Position = UDim2.new(IsMobile and 0.2 or 0, 0, IsMobile and 1 or 0.2, IsMobile and -3 or 0), BackgroundColor3 = Theme.Accent2, BorderSizePixel = 0, Visible = false, Parent = Tab.Button }); Create("UICorner", { Parent = Tab.Indicator })
-        Tab.Frame = Create("ScrollingFrame", { Name = name .. "_Content", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarImageColor3 = Theme.Accent2, ScrollBarThickness = 4, Parent = self.ContentFrame, Visible = false }); Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = Tab.Frame }); Create("UIPadding", {PaddingTop = UDim.new(0, 15), Parent = Tab.Frame})
+        Tab.Frame = Create("ScrollingFrame", { Name = name .. "_Content", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarImageColor3 = Theme.Accent2, ScrollBarThickness = 4, Parent = self.ContentFrame, Visible = false }); Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Left, Parent = Tab.Frame }); Create("UIPadding", {PaddingTop = UDim.new(0, 15), PaddingLeft = UDim.new(0, 15), Parent = Tab.Frame})
         
         Tab.Button.MouseButton1Click:Connect(function()
             if self.CurrentTab == Tab or isTweeningTab then return end; isTweeningTab = true
@@ -123,7 +122,9 @@ function Library.new(props)
         local track = Create("Frame", {Name="Track", Size=UDim2.new(1,0,0,6), Position=UDim2.new(0,0,0,25), BackgroundColor3=Theme.Header, Parent=frame}); Create("UICorner",{Parent=track})
         local progress = Create("Frame", {Name="Progress", Size=UDim2.new((val-min)/(max-min), 0, 1, 0), BackgroundColor3=Theme.Accent2, Parent=track}); Create("UICorner",{Parent=progress})
         local handle = Create("Frame", {Name="Handle", Size=UDim2.new(0,12,0,12), Position=UDim2.new(1,0,0.5,0), AnchorPoint=Vector2.new(0.5,0.5), BackgroundColor3=Theme.Text, Parent=progress}); Create("UICorner",{CornerRadius=UDim.new(1,0), Parent=handle})
+        
         local dragging = false
+        local inputChangedConn, inputEndedConn
         local function UpdateSlider(inputPos)
             local relativeX = inputPos.X - track.AbsolutePosition.X
             local percentage = math.clamp(relativeX / track.AbsoluteSize.X, 0, 1)
@@ -132,8 +133,24 @@ function Library.new(props)
             label.Text = (props.Text or "Slider")..": "..math.floor(val)
             if props.Callback then pcall(props.Callback, val) end
         end
-        track.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging=true; UpdateSlider(input.Position); local conn; conn=UserInputService.InputEnded:Connect(function(endInput) if endInput.UserInputType == Enum.UserInputType.MouseButton1 then dragging=false; conn:Disconnect() end end) end end)
-        track.InputChanged:Connect(function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then UpdateSlider(input.Position) end end)
+        track.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                UpdateSlider(input.Position)
+                inputChangedConn = UserInputService.InputChanged:Connect(function(changedInput)
+                    if dragging and (changedInput.UserInputType == Enum.UserInputType.MouseMovement or changedInput.UserInputType == Enum.UserInputType.Touch) then
+                        UpdateSlider(changedInput.Position)
+                    end
+                end)
+                inputEndedConn = UserInputService.InputEnded:Connect(function(endedInput)
+                    if endedInput.UserInputType == Enum.UserInputType.MouseButton1 or endedInput.UserInputType == Enum.UserInputType.Touch then
+                        dragging = false
+                        if inputChangedConn then inputChangedConn:Disconnect() end
+                        if inputEndedConn then inputEndedConn:Disconnect() end
+                    end
+                end)
+            end
+        end)
         return obj
     end
 
