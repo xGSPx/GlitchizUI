@@ -1,8 +1,9 @@
 --[[
-    GlitchizUI v3.5 (Definitive Version)
+    GlitchizUI v3.6 (Definitive Version)
+    - FIXED: Hide/Show and Delete buttons are now fully functional.
+    - FIXED: All elements are now properly left-aligned within tabs, removing the title offset bug.
     - FIXED: Slider logic was completely rebuilt to be robust and smooth. It will no longer get stuck.
     - NEW: The tab list is now a ScrollingFrame, allowing for unlimited tabs on both PC and Mobile.
-    - FIXED: All elements are now properly left-aligned within tabs, removing the weird title offsets.
     - FIXED: The title text no longer interferes with dragging the header.
     - FIXED: The dropdown now disables the main scrollbar when open, preventing scroll conflicts.
 --]]
@@ -80,10 +81,16 @@ function Library.new(props)
 
     MakeDraggable(self.MainFrame, Header)
     
+    function self:Destroy() self.ScreenGui:Destroy(); for i,v in pairs(self) do self[i]=nil; setmetatable(self, nil) end end
     local isContentVisible = true
-    local function ToggleVisibility() self.MainFrame.Visible = not self.MainFrame.Visible end
-    local function ToggleMinimize() isContentVisible = not isContentVisible; ContentContainer.Visible = isContentVisible; Animate(self.MainFrame, { Size = isContentVisible and self.Size or UDim2.new(self.Size.X.Scale, self.Size.X.Offset, 0, 40) }, 0.2); HideButton.Text = isContentVisible and "—" or "+" end
+    local function ToggleMinimize()
+        isContentVisible = not isContentVisible
+        ContentContainer.Visible = isContentVisible
+        Animate(self.MainFrame, { Size = isContentVisible and self.Size or UDim2.new(self.Size.X.Scale, self.Size.X.Offset, 0, 40) }, 0.2)
+        HideButton.Text = isContentVisible and "—" or "+"
+    end
     HideButton.MouseButton1Click:Connect(ToggleMinimize); DeleteButton.MouseButton1Click:Connect(function() self:Destroy() end)
+    local function ToggleVisibility() self.MainFrame.Visible = not self.MainFrame.Visible end
     UserInputService.InputBegan:Connect(function(input, gpe) if not gpe and input.KeyCode == self.Keybind then ToggleVisibility() end end)
     
     local isTweeningTab = false
@@ -145,8 +152,8 @@ function Library.new(props)
                 inputEndedConn = UserInputService.InputEnded:Connect(function(endedInput)
                     if endedInput.UserInputType == Enum.UserInputType.MouseButton1 or endedInput.UserInputType == Enum.UserInputType.Touch then
                         dragging = false
-                        if inputChangedConn then inputChangedConn:Disconnect() end
-                        if inputEndedConn then inputEndedConn:Disconnect() end
+                        if inputChangedConn then inputChangedConn:Disconnect(); inputChangedConn = nil end
+                        if inputEndedConn then inputEndedConn:Disconnect(); inputEndedConn = nil end
                     end
                 end)
             end
@@ -178,7 +185,6 @@ function Library.new(props)
         return obj
     end
 
-    function self:Destroy() self.ScreenGui:Destroy(); for i,v in pairs(self) do self[i]=nil end end
     return self
 end
 
