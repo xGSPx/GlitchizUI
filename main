@@ -1,13 +1,10 @@
 --[[
-    GlitchizUI v3.3 (Final Polished Version)
-    - FIXED: The title text no longer interferes with dragging the header. The entire top bar is now draggable.
+    GlitchizUI v3.4 (Final Polished Version)
+    - FIXED: Elements are now correctly parented to their respective tabs during script execution.
+    - FIXED: Added top padding to the content area for better visual layout.
+    - FIXED: The title text no longer interferes with dragging the header.
     - FIXED: The slider is now fully functional with smooth handle animation.
     - FIXED: The dropdown now disables the main scrollbar when open, preventing scroll conflicts.
-    - Added Keybind support for toggling the UI.
-    - Added responsive mobile support (UI reshapes for vertical screens).
-    - Added a submit button to Textboxes.
-    - Added slide animations for Tab transitions.
-    - Added hover/click feedback to all interactive elements.
 --]]
 
 local RunService = game:GetService("RunService")
@@ -92,11 +89,11 @@ function Library.new(props)
     
     local isTweeningTab = false
     function self:AddTab(name)
-        local Tab = { ElementOffset = 15 }
+        local Tab = { ElementOffset = 0 } -- Start at 0 for padding
         local buttonSize = IsMobile and UDim2.new(0, 100, 1, -10) or UDim2.new(1, -10, 0, 30)
         Tab.Button = Create("TextButton", { Name = name, Size = buttonSize, Text = name, Font = Theme.BoldFont, TextSize = Theme.TextSize, TextColor3 = Theme.Text, BackgroundColor3 = Theme.Header, BorderSizePixel = 0, LayoutOrder = #self.Tabs + 1, Parent = TabContainer }); Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = Tab.Button })
         Tab.Indicator = Create("Frame", { Name = "Indicator", Size = UDim2.new(IsMobile and 0.6 or 0, IsMobile and 0 or 3, IsMobile and 0 or 0.6, IsMobile and 3 or 0), Position = UDim2.new(IsMobile and 0.2 or 0, 0, IsMobile and 1 or 0.2, IsMobile and -3 or 0), BackgroundColor3 = Theme.Accent2, BorderSizePixel = 0, Visible = false, Parent = Tab.Button }); Create("UICorner", { Parent = Tab.Indicator })
-        Tab.Frame = Create("ScrollingFrame", { Name = name .. "_Content", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarImageColor3 = Theme.Accent2, ScrollBarThickness = 4, Parent = self.ContentFrame, Visible = false }); Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = Tab.Frame })
+        Tab.Frame = Create("ScrollingFrame", { Name = name .. "_Content", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarImageColor3 = Theme.Accent2, ScrollBarThickness = 4, Parent = self.ContentFrame, Visible = false }); Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = Tab.Frame }); Create("UIPadding", {PaddingTop = UDim.new(0, 15), Parent = Tab.Frame})
         
         Tab.Button.MouseButton1Click:Connect(function()
             if self.CurrentTab == Tab or isTweeningTab then return end; isTweeningTab = true
@@ -107,7 +104,8 @@ function Library.new(props)
             self.CurrentTab = Tab; isTweeningTab = false
         end)
         
-        if not self.CurrentTab then Tab.Button.BackgroundColor3 = Theme.Accent; Tab.Indicator.Visible = true; Tab.Frame.Visible = true; Tab.Frame.Position = UDim2.new(0,0,0,0); self.CurrentTab = Tab end
+        if self.CurrentTab then self.CurrentTab.Frame.Visible = false; self.CurrentTab.Button.BackgroundColor3 = Theme.Header; self.CurrentTab.Indicator.Visible = false end
+        Tab.Button.BackgroundColor3 = Theme.Accent; Tab.Indicator.Visible = true; Tab.Frame.Visible = true; Tab.Frame.Position = UDim2.new(0,0,0,0); self.CurrentTab = Tab
         self.Tabs[name] = Tab; return self
     end
     
