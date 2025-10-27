@@ -1,7 +1,7 @@
 --[[
-    GlitchizUI v1.1
+    GlitchizUI v2.0 (Modern Redesign)
     A feature-rich, modern UI library with a unique "glitchy" aesthetic.
-    Optimized for stability in various client environments.
+    Redesigned for a clean, stylish, and futuristic look.
 --]]
 
 local RunService = game:GetService("RunService")
@@ -11,11 +11,11 @@ local CoreGui = game:GetService("CoreGui")
 local Library = {}
 Library.__index = Library
 
--- // Theme Configuration
+-- // Modern Theme Configuration
 local Theme = {
-    Background = Color3.fromRGB(25, 22, 35),      -- Dark Purple/Black
-    Header = Color3.fromRGB(60, 20, 90),          -- Main Purple
-    Accent = Color3.fromRGB(130, 60, 255),        -- Lighter Purple
+    Background = Color3.fromRGB(20, 18, 28),      -- Dark Purple/Black
+    Header = Color3.fromRGB(45, 35, 65),          -- Darker, muted purple
+    Accent = Color3.fromRGB(110, 70, 220),        -- Main vibrant purple
     Accent2 = Color3.fromRGB(0, 240, 255),        -- Neon Blue
     Text = Color3.fromRGB(255, 255, 255),         -- White
     Font = Enum.Font.SourceSans,
@@ -34,27 +34,27 @@ end
 
 local function MakeDraggable(object, handle)
     local dragging = false
-    local dragInput, dragStart, startPos
+    local dragStart, startPos
 
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = object.Position
-            input.Changed:Connect(function()
+            local conn
+            conn = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
+                    conn:Disconnect()
                 end
             end)
         end
     end)
 
-    handle.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            if dragging then
-                local delta = input.Position - dragStart
-                object.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-            end
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            object.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 end
@@ -62,453 +62,115 @@ end
 -- // Main Window Constructor
 function Library.new(props)
     local self = setmetatable({}, Library)
-
     self.Title = props.Title or "GlitchizUI"
     self.Size = props.Size or UDim2.new(0, 550, 0, 350)
-    self.Position = props.Position
-
     self.Tabs = {}
-    self.CurrentTab = nil
-    self.ElementOffset = 15
 
     -- // Main ScreenGui
     self.ScreenGui = Create("ScreenGui", {
         Name = "GlitchizUI_ScreenGui",
         ZIndexBehavior = Enum.ZIndexBehavior.Global,
-        Parent = CoreGui -- Changed for compatibility
+        Parent = CoreGui
     })
 
     -- // Main Frame
     self.MainFrame = Create("Frame", {
         Name = "MainFrame",
         Size = self.Size,
-        Position = self.Position or UDim2.new(0.5, -self.Size.X.Offset / 2, 0.5, -self.Size.Y.Offset / 2),
+        Position = props.Position or UDim2.new(0.5, -self.Size.X.Offset / 2, 0.5, -self.Size.Y.Offset / 2),
         BackgroundColor3 = Theme.Background,
+        BackgroundTransparency = 0.15,
         BorderSizePixel = 0,
         Parent = self.ScreenGui
     })
+    Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.MainFrame })
+    Create("UIStroke", { Color = Theme.Accent2, Transparency = 0.7, Thickness = 1.5, Parent = self.MainFrame })
 
     -- // Header
     local Header = Create("Frame", {
         Name = "Header",
         Size = UDim2.new(1, 0, 0, 40),
         BackgroundColor3 = Theme.Header,
+        BackgroundTransparency = 0.2,
         BorderSizePixel = 0,
         Parent = self.MainFrame
     })
 
     -- // Title Label
     Create("TextLabel", {
-        Name = "Title",
-        Size = UDim2.new(1, -80, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        Text = self.Title,
-        Font = Theme.BoldFont,
-        TextSize = Theme.TextSize + 4,
-        TextColor3 = Theme.Text,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        BackgroundTransparency = 1,
-        Parent = Header
+        Name = "Title", Size = UDim2.new(1, -80, 1, 0), Position = UDim2.new(0, 15, 0, 0),
+        Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4,
+        TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = Header
     })
     
-    -- // Control Buttons Frame
-    local Controls = Create("Frame", {
-        Name = "Controls",
-        Size = UDim2.new(0, 60, 1, 0),
-        Position = UDim2.new(1, -60, 0, 0),
-        BackgroundTransparency = 1,
-        Parent = Header,
-    })
-
-    -- // Hide/Show Button
-    local HideButton = Create("TextButton", {
-        Name = "HideButton",
-        Size = UDim2.new(0, 30, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundColor3 = Theme.Header,
-        Text = "-",
-        Font = Theme.BoldFont,
-        TextSize = 20,
-        TextColor3 = Theme.Text,
-        Parent = Controls
-    })
-
-    -- // Delete Button
-    local DeleteButton = Create("TextButton", {
-        Name = "DeleteButton",
-        Size = UDim2.new(0, 30, 1, 0),
-        Position = UDim2.new(0, 30, 0, 0),
-        BackgroundColor3 = Theme.Header,
-        Text = "X",
-        Font = Theme.BoldFont,
-        TextSize = 20,
-        TextColor3 = Theme.Text,
-        Parent = Controls
-    })
+    -- // Control Buttons
+    local Controls = Create("Frame", { Name = "Controls", Size = UDim2.new(0, 60, 1, 0), Position = UDim2.new(1, -60, 0, 0), BackgroundTransparency = 1, Parent = Header })
+    local HideButton = Create("TextButton", { Name = "HideButton", Size = UDim2.new(0, 30, 1, 0), BackgroundColor3 = Theme.Header, Text = "—", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
+    local DeleteButton = Create("TextButton", { Name = "DeleteButton", Size = UDim2.new(0, 30, 1, 0), Position = UDim2.new(0, 30, 0, 0), BackgroundColor3 = Theme.Header, Text = "✕", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
     
-    -- // Container for all content
-    local ContentContainer = Create("Frame", {
-        Name = "ContentContainer",
-        Size = UDim2.new(1, 0, 1, -40),
-        Position = UDim2.new(0, 0, 0, 40),
-        BackgroundTransparency = 1,
-        Parent = self.MainFrame
-    })
+    -- // Content Container
+    local ContentContainer = Create("Frame", { Name = "ContentContainer", Size = UDim2.new(1, 0, 1, -40), Position = UDim2.new(0, 0, 0, 40), BackgroundTransparency = 1, Parent = self.MainFrame })
+    self.TabButtonsFrame = Create("Frame", { Name = "TabButtonsFrame", Size = UDim2.new(0, 120, 1, 0), BackgroundColor3 = Theme.Background, BackgroundTransparency = 0.3, BorderSizePixel = 0, Parent = ContentContainer })
+    Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = self.TabButtonsFrame })
+    self.ContentFrame = Create("Frame", { Name = "ContentFrame", Size = UDim2.new(1, -120, 1, 0), Position = UDim2.new(0, 120, 0, 0), BackgroundTransparency = 1, BorderSizePixel = 0, Parent = ContentContainer })
 
-    -- // Tab Buttons Frame
-    self.TabButtonsFrame = Create("Frame", {
-        Name = "TabButtonsFrame",
-        Size = UDim2.new(0, 120, 1, 0),
-        BackgroundColor3 = Theme.Background,
-        BorderSizePixel = 0,
-        Parent = ContentContainer,
-    })
-
-    Create("UIListLayout", {
-        FillDirection = Enum.FillDirection.Vertical,
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, 5),
-        Parent = self.TabButtonsFrame
-    })
-
-    -- // Content Frame
-    self.ContentFrame = Create("Frame", {
-        Name = "ContentFrame",
-        Size = UDim2.new(1, -120, 1, 0),
-        Position = UDim2.new(0, 120, 0, 0),
-        BackgroundColor3 = Theme.Background,
-        BorderSizePixel = 0,
-        Parent = ContentContainer
-    })
-
-    -- // Make the window draggable
     MakeDraggable(self.MainFrame, Header)
 
-    -- // Button Events
-    local isVisible = true
     local isContentVisible = true
     HideButton.MouseButton1Click:Connect(function()
         isContentVisible = not isContentVisible
         ContentContainer.Visible = isContentVisible
-        self.MainFrame.Size = isContentVisible and self.Size or UDim2.new(self.Size.X.Scale, self.Size.X.Offset, 0, 40)
-        HideButton.Text = isContentVisible and "-" or "+"
+        self.MainFrame:TweenSize(isContentVisible and self.Size or UDim2.new(self.Size.X.Scale, self.Size.X.Offset, 0, 40), "Out", "Quad", 0.2, true)
+        HideButton.Text = isContentVisible and "—" or "+"
     end)
-    
-    DeleteButton.MouseButton1Click:Connect(function()
-        self:Destroy()
-    end)
-    
-    -- // Public methods
+    DeleteButton.MouseButton1Click:Connect(function() self:Destroy() end)
+
     function self:AddTab(name)
-        -- Hide previous tab
-        if self.CurrentTab then
-            self.CurrentTab.Frame.Visible = false
-            self.CurrentTab.Button.BackgroundColor3 = Theme.Background
-        end
-
-        local Tab = {}
-        self.ElementOffset = 15 -- Reset offset for new tab
-
-        Tab.Button = Create("TextButton", {
-            Name = name,
-            Size = UDim2.new(1, -10, 0, 30),
-            Position = UDim2.new(0.5, 0, 0, 0),
-            AnchorPoint = Vector2.new(0.5, 0),
-            Text = name,
-            Font = Theme.Font,
-            TextSize = Theme.TextSize,
-            TextColor3 = Theme.Text,
-            BackgroundColor3 = Theme.Accent,
-            BorderSizePixel = 0,
-            LayoutOrder = #self.Tabs + 1,
-            Parent = self.TabButtonsFrame,
-        })
-        
+        if self.CurrentTab then self.CurrentTab.Frame.Visible = false; self.CurrentTab.Indicator.Visible = false; self.CurrentTab.Button.BackgroundColor3 = Theme.Header; end
+        local Tab = { ElementOffset = 15 }
+        Tab.Button = Create("TextButton", { Name = name, Size = UDim2.new(1, -10, 0, 30), Text = name, Font = Theme.BoldFont, TextSize = Theme.TextSize, TextColor3 = Theme.Text, BackgroundColor3 = Theme.Accent, BorderSizePixel = 0, LayoutOrder = #self.Tabs + 1, Parent = self.TabButtonsFrame })
         Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = Tab.Button })
-
-        Tab.Frame = Create("ScrollingFrame", {
-            Name = name .. "_Content",
-            Size = UDim2.new(1, 0, 1, 0),
-            BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
-            ScrollBarImageColor3 = Theme.Accent2,
-            ScrollBarThickness = 4,
-            Parent = self.ContentFrame,
-        })
-        
-        local UIList = Create("UIListLayout", {
-            FillDirection = Enum.FillDirection.Vertical,
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 10),
-            Parent = Tab.Frame
-        })
-
-        Tab.Button.MouseButton1Click:Connect(function()
-            if self.CurrentTab then
-                self.CurrentTab.Frame.Visible = false
-                self.CurrentTab.Button.BackgroundColor3 = Theme.Background
-            end
-            Tab.Frame.Visible = true
-            Tab.Button.BackgroundColor3 = Theme.Accent
-            self.CurrentTab = Tab
-            self.ElementOffset = UIList.AbsoluteContentSize.Y + 15
-        end)
-        
-        self.Tabs[name] = Tab
-        self.CurrentTab = Tab
-        return self
+        Tab.Indicator = Create("Frame", { Name = "Indicator", Size = UDim2.new(0, 3, 0.6, 0), Position = UDim2.new(0, 0, 0.2, 0), BackgroundColor3 = Theme.Accent2, BorderSizePixel = 0, Parent = Tab.Button })
+        Create("UICorner", { Parent = Tab.Indicator })
+        Tab.Frame = Create("ScrollingFrame", { Name = name .. "_Content", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarImageColor3 = Theme.Accent2, ScrollBarThickness = 4, Parent = self.ContentFrame })
+        local UIList = Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = Tab.Frame })
+        Tab.Button.MouseButton1Click:Connect(function() if self.CurrentTab then self.CurrentTab.Frame.Visible = false; self.CurrentTab.Button.BackgroundColor3 = Theme.Header; self.CurrentTab.Indicator.Visible = false; end; Tab.Frame.Visible = true; Tab.Button.BackgroundColor3 = Theme.Accent; Tab.Indicator.Visible = true; self.CurrentTab = Tab; end)
+        self.Tabs[name] = Tab; self.CurrentTab = Tab; return self
     end
     
-    -- // Generic function to add elements
     function self:AddElement(height)
-        if not self.CurrentTab then
-            warn("GlitchizUI: No tab selected. Create a tab first using AddTab().")
-            return
-        end
-        
-        local elementFrame = Create("Frame", {
-            Size = UDim2.new(1, -30, 0, height),
-            Position = UDim2.new(0.5, 0, 0, 0),
-            AnchorPoint = Vector2.new(0.5, 0),
-            BackgroundTransparency = 1,
-            LayoutOrder = self.ElementOffset,
-            Parent = self.CurrentTab.Frame,
-        })
-        
-        self.ElementOffset = self.ElementOffset + height + 10 -- Update for next element
-        self.CurrentTab.Frame.CanvasSize = UDim2.new(0, 0, 0, self.ElementOffset)
-        
+        if not self.CurrentTab then warn("GlitchizUI: No tab created."); return end
+        local tab = self.CurrentTab
+        local elementFrame = Create("Frame", { Size = UDim2.new(1, -30, 0, height), BackgroundTransparency = 1, LayoutOrder = tab.ElementOffset, Parent = tab.Frame })
+        tab.ElementOffset = tab.ElementOffset + height + 10; tab.Frame.CanvasSize = UDim2.new(0, 0, 0, tab.ElementOffset)
         return elementFrame
     end
 
     function self:AddButton(props)
-        local frame = self:AddElement(35)
-        local ButtonObject = {}
-
-        local btn = Create("TextButton", {
-            Name = "Button",
-            Size = UDim2.new(1, 0, 1, 0),
-            Text = props.Text or "Button",
-            Font = Theme.Font,
-            TextSize = Theme.TextSize,
-            TextColor3 = Theme.Text,
-            BackgroundColor3 = Theme.Accent,
-            Parent = frame
-        })
-        Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = btn })
-
-        btn.MouseButton1Click:Connect(function()
-            if props.Callback then
-                pcall(props.Callback)
-            end
-        end)
-        
-        return ButtonObject
+        local frame = self:AddElement(35); local btn = Create("TextButton", { Name = "Button", Size = UDim2.new(1, 0, 1, 0), Text = props.Text or "Button", Font = Theme.Font, TextSize = Theme.TextSize, TextColor3 = Theme.Text, BackgroundColor3 = Theme.Header, Parent = frame }); Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = btn }); Create("UIStroke", { Color = Theme.Accent, Parent = btn }); if props.Callback then btn.MouseButton1Click:Connect(function() pcall(props.Callback) end) end; return {}
     end
 
     function self:AddToggle(props)
-        local frame = self:AddElement(25)
-        local ToggleObject = { Value = props.Default or false }
-        
-        local Checkbox = Create("TextButton", {
-            Name = "Toggle",
-            Size = UDim2.new(0, 25, 0, 25),
-            Position = UDim2.new(0, 0, 0.5, 0),
-            AnchorPoint = Vector2.new(0, 0.5),
-            BackgroundColor3 = Theme.Accent,
-            Text = "",
-            Parent = frame
-        })
-        Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = Checkbox })
-        
-        local Checkmark = Create("Frame", {
-            Name = "Checkmark",
-            Size = UDim2.new(0.7, 0, 0.7, 0),
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            BackgroundColor3 = Theme.Accent2,
-            Visible = ToggleObject.Value,
-            Parent = Checkbox
-        })
-        Create("UICorner", { CornerRadius = UDim.new(0, 2), Parent = Checkmark })
-        
-        Create("TextLabel", {
-            Name = "Label",
-            Size = UDim2.new(1, -35, 1, 0),
-            Position = UDim2.new(0, 35, 0, 0),
-            Text = props.Text or "Toggle",
-            Font = Theme.Font,
-            TextSize = Theme.TextSize,
-            TextColor3 = Theme.Text,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            BackgroundTransparency = 1,
-            Parent = frame
-        })
-        
-        Checkbox.MouseButton1Click:Connect(function()
-            ToggleObject.Value = not ToggleObject.Value
-            Checkmark.Visible = ToggleObject.Value
-            if props.Callback then
-                pcall(props.Callback, ToggleObject.Value)
-            end
-        end)
-        
-        return ToggleObject
+        local frame = self:AddElement(25); local obj = { Value = props.Default or false }; local label = Create("TextLabel", { Name = "Label", Size = UDim2.new(1, -35, 1, 0), Position = UDim2.new(0, 35, 0, 0), Text = props.Text or "Toggle", Font = Theme.Font, TextSize = Theme.TextSize, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = frame }); local box = Create("TextButton", { Name = "Toggle", Size = UDim2.new(0, 25, 0, 25), Position = UDim2.new(0, 0, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), BackgroundColor3 = Theme.Header, Text = "", Parent = frame }); Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = box }); Create("UIStroke", { Color = Theme.Accent, Parent = box }); local mark = Create("Frame", { Name = "Checkmark", Size = UDim2.new(0.6, 0, 0.6, 0), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = Theme.Accent2, Visible = obj.Value, Parent = box }); Create("UICorner", { CornerRadius = UDim.new(0, 2), Parent = mark }); box.MouseButton1Click:Connect(function() obj.Value = not obj.Value; mark.Visible = obj.Value; if props.Callback then pcall(props.Callback, obj.Value) end end); return obj
+    end
+
+    function self:AddTextbox(props)
+        local frame = self:AddElement(35); local obj = {}; local box = Create("TextBox", { Name = "Textbox", Size = UDim2.new(1, 0, 1, 0), Text = props.Default or "", PlaceholderText = props.Placeholder or "...", Font = Theme.Font, TextSize = Theme.TextSize, TextColor3 = Theme.Text, BackgroundColor3 = Theme.Header, ClearTextOnFocus = props.ClearOnFocus or false, Parent = frame }); Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = box }); Create("UIStroke", { Color = Theme.Accent, Parent = box }); box.FocusLost:Connect(function(enter) if enter and props.Callback then pcall(props.Callback, box.Text) end end); function obj:GetText() return box.Text end; function obj:SetText(t) box.Text = t end; return obj
     end
     
     function self:AddLabel(props)
-        local frame = self:AddElement(20)
-        local LabelObject = {}
-        
-        local label = Create("TextLabel", {
-            Name = "Label",
-            Size = UDim2.new(1, 0, 1, 0),
-            Text = props.Text or "Label",
-            Font = props.Bold and Theme.BoldFont or Theme.Font,
-            TextSize = props.Big and Theme.TextSize + 4 or Theme.TextSize,
-            TextColor3 = Theme.Text,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            BackgroundTransparency = 1,
-            Parent = frame
-        })
-        
-        function LabelObject:Set(newText)
-            label.Text = newText
-        end
-
-        return LabelObject
+        local frame = self:AddElement(20); local obj = {}; local label = Create("TextLabel", { Name = "Label", Size = UDim2.new(1, 0, 1, 0), Text = props.Text or "Label", Font = props.Bold and Theme.BoldFont or Theme.Font, TextSize = props.Big and Theme.TextSize + 4 or Theme.TextSize, TextColor3 = props.Color or Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = frame }); function obj:Set(t) label.Text = t end; return obj
     end
 
     function self:AddDivider()
-        local frame = self:AddElement(5)
-        
-        Create("Frame", {
-            Name = "Divider",
-            Size = UDim2.new(1, 0, 0, 2),
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            BackgroundColor3 = Theme.Accent,
-            BorderSizePixel = 0,
-            Parent = frame
-        })
-    end
-    
-    function self:AddTextbox(props)
-        local frame = self:AddElement(35)
-        local TextboxObject = {}
-        
-        local box = Create("TextBox", {
-            Name = "Textbox",
-            Size = UDim2.new(1, 0, 1, 0),
-            Text = props.Default or "",
-            PlaceholderText = props.Placeholder or "...",
-            Font = Theme.Font,
-            TextSize = Theme.TextSize,
-            TextColor3 = Theme.Text,
-            BackgroundColor3 = Theme.Header,
-            ClearTextOnFocus = false,
-            Parent = frame
-        })
-        Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = box })
-        
-        box.FocusLost:Connect(function(enterPressed)
-            if enterPressed and props.Callback then
-                pcall(props.Callback, box.Text)
-            end
-        end)
-        
-        function TextboxObject:GetText()
-            return box.Text
-        end
-        
-        function TextboxObject:SetText(newText)
-            box.Text = newText
-        end
-        
-        return TextboxObject
+        local frame = self:AddElement(8); Create("Frame", { Name = "Divider", Size = UDim2.new(1, 0, 0, 1), Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.5, BorderSizePixel = 0, Parent = frame })
     end
     
     function self:AddSlider(props)
-        local frame = self:AddElement(40)
-        local SliderObject = {}
-        
-        local min, max, default = props.Min or 0, props.Max or 100, props.Default or 50
-        local value = default
-
-        local label = Create("TextLabel", {
-            Name = "Label",
-            Size = UDim2.new(1, 0, 0, 20),
-            Text = (props.Text or "Slider") .. ": " .. math.floor(value),
-            Font = Theme.Font,
-            TextSize = Theme.TextSize,
-            TextColor3 = Theme.Text,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            BackgroundTransparency = 1,
-            Parent = frame
-        })
-
-        local track = Create("Frame", {
-            Name = "Track",
-            Size = UDim2.new(1, 0, 0, 8),
-            Position = UDim2.new(0, 0, 0, 25),
-            BackgroundColor3 = Theme.Header,
-            Parent = frame,
-        })
-        Create("UICorner", { Parent = track })
-        
-        local progress = Create("Frame", {
-            Name = "Progress",
-            Size = UDim2.new((value - min) / (max - min), 0, 1, 0),
-            BackgroundColor3 = Theme.Accent2,
-            Parent = track,
-        })
-        Create("UICorner", { Parent = progress })
-        
-        local dragging = false
-        local function UpdateSlider(input)
-            local pos = input.Position.X - track.AbsolutePosition.X
-            local percent = math.clamp(pos / track.AbsoluteSize.X, 0, 1)
-            value = min + (max - min) * percent
-            
-            if props.Callback then
-                pcall(props.Callback, value)
-            end
-            
-            progress.Size = UDim2.new(percent, 0, 1, 0)
-            label.Text = (props.Text or "Slider") .. ": " .. math.floor(value)
-        end
-        
-        track.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                UpdateSlider(input)
-                local conn
-                conn = UserInputService.InputEnded:Connect(function(endInput)
-                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
-                        dragging = false
-                        conn:Disconnect()
-                    end
-                end)
-            end
-        end)
-        
-        track.InputChanged:Connect(function(input)
-            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                UpdateSlider(input)
-            end
-        end)
-        
-        return SliderObject
+        local frame = self:AddElement(45); local obj = {}; local min, max, val = props.Min or 0, props.Max or 100, props.Default or 50; local label = Create("TextLabel", { Name = "Label", Size = UDim2.new(1, 0, 0, 20), Text = (props.Text or "Slider") .. ": " .. math.floor(val), Font = Theme.Font, TextSize = Theme.TextSize, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = frame }); local track = Create("Frame", { Name = "Track", Size = UDim2.new(1, 0, 0, 6), Position = UDim2.new(0, 0, 0, 25), BackgroundColor3 = Theme.Header, Parent = frame }); Create("UICorner", { Parent = track }); local progress = Create("Frame", { Name = "Progress", Size = UDim2.new((val - min) / (max - min), 0, 1, 0), BackgroundColor3 = Theme.Accent2, Parent = track }); Create("UICorner", { Parent = progress }); local handle = Create("Frame", { Name = "Handle", Size = UDim2.new(0, 12, 0, 12), Position = progress.Size.X, AnchorPoint = Vector2.new(0.5, -0.25), BackgroundColor3 = Theme.Text, Parent = progress }); Create("UICorner", {CornerRadius = UDim.new(1,0), Parent = handle}); local drag = false; local function update(input) local pos = input.Position.X - track.AbsolutePosition.X; local perc = math.clamp(pos / track.AbsoluteSize.X, 0, 1); val = min + (max - min) * perc; if props.Callback then pcall(props.Callback, val) end; progress.Size = UDim2.new(perc, 0, 1, 0); handle.Position = UDim2.new(1, 0, 0.5, 0); label.Text = (props.Text or "Slider") .. ": " .. math.floor(val) end; track.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = true; update(i); local conn; conn = UserInputService.InputEnded:Connect(function(e) if e.UserInputType == Enum.UserInputType.MouseButton1 then drag = false; conn:Disconnect() end end) end end); track.InputChanged:Connect(function(i) if drag and i.UserInputType == Enum.UserInputType.MouseMovement then update(i) end end); return obj
     end
 
-    function self:Destroy()
-        self.ScreenGui:Destroy()
-        for i,v in pairs(self) do
-            self[i] = nil
-        end
-    end
-
+    function self:Destroy() self.ScreenGui:Destroy(); for i,v in pairs(self) do self[i] = nil end end
     return self
 end
 
