@@ -254,59 +254,87 @@ Window:AddButton({ Text = "Button 2" })
 Here is a complete script that uses every feature of the library, serving as a perfect starting point.
 
 ```lua
+-- ==========================================================
+-- GlitchizUI v3.1 Loader
+-- Loads the final version with the Dropdown included.
+-- ==========================================================
+
 local URL = "https://raw.githubusercontent.com/xGSPx/GlitchizUI/main/main"
 
-local success, response = pcall(function() return game:HttpGet(URL) end)
+local success, response = pcall(function()
+    return game:HttpGet(URL)
+end)
 
 if success then
     local GlitchizUI = loadstring(response)()
 
-    -- Create the main window
+    -- ==========================================================
+    --                  UI CREATION & DEMO
+    -- ==========================================================
+
     local Window = GlitchizUI.new({
-        Title = "GlitchizUI Full Demo",
-        Size = UDim2.new(0, 520, 0, 400),
+        Title = "GlitchizUI v3.1",
+        Keybind = Enum.KeyCode.RightControl, -- Press Right-Control to toggle
     })
 
-    -- Create a 'Main' Tab
-    Window:AddTab("Player")
-    Window:AddLabel({ Text = "Player Modifications", Big = true, Bold = true })
-    Window:AddButton({
-        Text = "Reset Character",
-        Callback = function()
-            game.Players.LocalPlayer.Character.Humanoid.Health = 0
-        end
-    })
+    -- Create the 'Main' Tab
+    Window:AddTab("Main")
+
+    Window:AddLabel({ Text = "Welcome to GlitchizUI v3.1!", Big = true, Bold = true })
+    Window:AddLabel({ Text = "The dropdown element has been added."})
     Window:AddDivider()
-    Window:AddSlider({
-        Text = "WalkSpeed",
-        Min = 16, Max = 200, Default = 16,
-        Callback = function(v)
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v
+    Window:AddToggle({
+        Text = "Infinite Yield (Example)", Default = false,
+        Callback = function(v) print("Infinite Yield set to:", v) end
+    })
+    Window:AddButton({
+        Text = "Print 'Hello World'",
+        Callback = function() print("Hello World") end
+    })
+
+    -- Create the 'Player' Tab
+    Window:AddTab("Player")
+    Window:AddLabel({ Text = "Player Customization", Bold = true })
+    Window:AddTextbox({
+        Placeholder = "Enter custom speed...", ButtonText = "Set",
+        Callback = function(text)
+            local speed = tonumber(text)
+            if speed and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+                game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = speed
+                print("WalkSpeed set to:", speed)
+            else
+                print("Invalid speed input:", text)
+            end
         end
     })
-    Window:AddToggle({
-        Text = "Fly Mode (Placeholder)",
-        Default = false,
+    Window:AddSlider({
+        Text = "Jump Power", Min = 50, Max = 500, Default = 50,
         Callback = function(v)
-            print("Fly mode set to:", v)
+            if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+                game.Players.LocalPlayer.Character.Humanoid.JumpPower = v
+            end
         end
     })
 
-    -- Create a 'Settings' Tab
-    Window:AddTab("Settings")
-    Window:AddLabel({ Text = "UI Settings", Big = true, Bold = true })
-    local NameTextbox = Window:AddTextbox({
-        Placeholder = "Change UI Title...",
-        Callback = function(text)
-            -- This is an example of how you might interact with the UI itself.
-            -- Note: There is no built-in function to change the title after creation,
-            -- this is just for demonstration.
-            print("New title requested:", text)
+    -- Create a 'Visuals' Tab to show the Dropdown
+    Window:AddTab("Visuals")
+    Window:AddLabel({ Text = "Client-Side Visuals", Bold = true })
+    Window:AddSlider({
+        Text = "Field of View", Min = 70, Max = 120, Default = 70,
+        Callback = function(v) workspace.CurrentCamera.FieldOfView = v end
+    })
+    
+    -- New Dropdown Demonstration
+    Window:AddDropdown({
+        Default = "Default Sky",
+        Options = {"Default Sky", "Night Sky", "Sunset", "Cartoon"},
+        Callback = function(selectedOption)
+            print("Skybox option selected:", selectedOption)
+            -- In a real script, you would change game.Lighting properties here
         end
     })
-    Window:AddLabel({ Text = "This is a demonstration of all features.", Color = Color3.fromRGB(0, 240, 255) })
 
 else
-    warn("GlitchizUI Error:", response)
+    warn("GlitchizUI Error: Failed to load library from GitHub.", response)
 end
 ```
