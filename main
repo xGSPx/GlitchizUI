@@ -1,10 +1,11 @@
 --[[
-    GlitchizUI v3.1 (Pre-Release)
-    - Re-integrated the Dropdown element with modern styling and animations.
+    GlitchizUI v3.3 (Final Polished Version)
+    - FIXED: The title text no longer interferes with dragging the header. The entire top bar is now draggable.
+    - FIXED: The slider is now fully functional with smooth handle animation.
+    - FIXED: The dropdown now disables the main scrollbar when open, preventing scroll conflicts.
     - Added Keybind support for toggling the UI.
     - Added responsive mobile support (UI reshapes for vertical screens).
     - Added a submit button to Textboxes.
-    - Added smooth animations for the Slider handle.
     - Added slide animations for Tab transitions.
     - Added hover/click feedback to all interactive elements.
 --]]
@@ -62,7 +63,7 @@ function Library.new(props)
     Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.MainFrame }); Create("UIStroke", { Color = Theme.Accent2, Transparency = 0.7, Thickness = 1.5, Parent = self.MainFrame })
 
     local Header = Create("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = Theme.Header, BackgroundTransparency = 0.2, BorderSizePixel = 0, Parent = self.MainFrame })
-    Create("TextLabel", { Name = "Title", Size = UDim2.new(1, -80, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = Header })
+    Create("TextLabel", { Name = "Title", Size = UDim2.new(1, -80, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Active = false, Parent = Header })
     
     local Controls = Create("Frame", { Name = "Controls", Size = UDim2.new(0, 60, 1, 0), Position = UDim2.new(1, -60, 0, 0), BackgroundTransparency = 1, Parent = Header })
     local HideButton = Create("TextButton", { Name = "HideButton", Size = UDim2.new(0, 30, 1, 0), BackgroundColor3 = Theme.Header, Text = "—", Font = Theme.BoldFont, TextSize = 16, TextColor3 = Theme.Text, Parent = Controls })
@@ -114,9 +115,29 @@ function Library.new(props)
     function self:AddLabel(p) local f=self:AddElement(20); local l=Create("TextLabel",{Size=UDim2.new(1,0,1,0),Text=p.Text or "Label",Font=p.Bold and Theme.BoldFont or Theme.Font,TextSize=p.Big and Theme.TextSize+4 or Theme.TextSize,TextColor3=p.Color or Theme.Text,TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,Parent=f}); local o={}; function o:Set(t)l.Text=t end; return o end
     function self:AddDivider() local f=self:AddElement(8);Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0.5,0,0.5,0),AnchorPoint=Vector2.new(0.5,0.5),BackgroundColor3=Theme.Accent,BackgroundTransparency=0.5,BorderSizePixel=0,Parent=f})end
     function self:AddButton(p) local f=self:AddElement(35);local b=Create("TextButton",{Name="Button",Size=UDim2.new(1,0,1,0),Text=p.Text or "Button",Font=Theme.Font,TextSize=Theme.TextSize,TextColor3=Theme.Text,BackgroundColor3=Theme.Header,Parent=f});Create("UICorner",{CornerRadius=UDim.new(0,4),Parent=b});local s=Create("UIStroke",{Color=Theme.Accent,Parent=b});if p.Callback then b.MouseButton1Click:Connect(function()pcall(p.Callback)end)end;b.MouseEnter:Connect(function()Animate(s,{Color=Theme.Accent2})end);b.MouseLeave:Connect(function()Animate(s,{Color=Theme.Accent})end);return{}end
-    function self:AddToggle(p) local f=self:AddElement(25);local o={Value=p.Default or false};Create("TextLabel",{Size=UDim2.new(1,-35,1,0),Position=UDim2.new(0,35,0,0),Text=p.Text or "Toggle",Font=Theme.Font,TextSize=Theme.TextSize,TextColor3=Theme.Text,TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,Parent=f});local b=Create("TextButton",{Name="Toggle",Size=UDim2.new(0,25,0,25),Position=UDim2.new(0,0,0.5,0),AnchorPoint=Vector2.new(0,0.5),BackgroundColor3=Theme.Header,Text="",Parent=f});Create("UICorner",{CornerRadius=UDim.new(0,4),Parent=b});local s=Create("UIStroke",{Color=Theme.Accent,Parent=b});local m=Create("Frame",{Name="Checkmark",Size=UDim2.new(0.6,0,0.6,0),Position=UDim2.new(0.5,0,0.5,0),AnchorPoint=Vector2.new(0.5,0.5),BackgroundColor3=Theme.Accent2,Visible=o.Value,Parent=b});Create("UICorner",{CornerRadius=UDim.new(0,2),Parent=m});b.MouseButton1Click:Connect(function()o.Value=not o.Value;m.Visible=o.Value;Animate(m.Parent,{Size=UDim2.new(0,25,0,25)});if p.Callback then pcall(p.Callback,o.Value)end end);b.MouseEnter:Connect(function()Animate(s,{Color=Theme.Accent2})end);b.MouseLeave:Connect(function()Animate(s,{Color=Theme.Accent})end);return o end
+    function self:AddToggle(p) local f=self:AddElement(25);local o={Value=p.Default or false};Create("TextLabel",{Size=UDim2.new(1,-35,1,0),Position=UDim2.new(0,35,0,0),Text=p.Text or "Toggle",Font=Theme.Font,TextSize=Theme.TextSize,TextColor3=Theme.Text,TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,Parent=f});local b=Create("TextButton",{Name="Toggle",Size=UDim2.new(0,25,0,25),Position=UDim2.new(0,0,0.5,0),AnchorPoint=Vector2.new(0,0.5),BackgroundColor3=Theme.Header,Text="",Parent=f});Create("UICorner",{CornerRadius=UDim.new(0,4),Parent=b});local s=Create("UIStroke",{Color=Theme.Accent,Parent=b});local m=Create("Frame",{Name="Checkmark",Size=UDim2.new(0.6,0,0.6,0),Position=UDim2.new(0.5,0,0.5,0),AnchorPoint=Vector2.new(0.5,0.5),BackgroundColor3=Theme.Accent2,Visible=o.Value,Parent=b});Create("UICorner",{CornerRadius=UDim.new(0,2),Parent=m});b.MouseButton1Click:Connect(function()o.Value=not o.Value;m.Visible=o.Value;if p.Callback then pcall(p.Callback,o.Value)end end);b.MouseEnter:Connect(function()Animate(s,{Color=Theme.Accent2})end);b.MouseLeave:Connect(function()Animate(s,{Color=Theme.Accent})end);return o end
     function self:AddTextbox(p) local f=self:AddElement(35);local o={};local bf=Create("Frame",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Theme.Header,Parent=f});Create("UICorner",{CornerRadius=UDim.new(0,4),Parent=bf});Create("UIStroke",{Color=Theme.Accent,Parent=bf});local b=Create("TextBox",{Name="Textbox",Size=UDim2.new(1,-85,1,0),Position=UDim2.new(0,5,0,0),Text=p.Default or"",PlaceholderText=p.Placeholder or"...",Font=Theme.Font,TextSize=Theme.TextSize,TextColor3=Theme.Text,BackgroundTransparency=1,ClearTextOnFocus=p.ClearOnFocus or false,Parent=bf});local btn=Create("TextButton",{Name="Submit",Size=UDim2.new(0,70,0.8,0),Position=UDim2.new(1,-75,0.1,0),Text=p.ButtonText or"Submit",Font=Theme.Font,TextSize=Theme.TextSize-1,TextColor3=Theme.Text,BackgroundColor3=Theme.Accent,Parent=bf});Create("UICorner",{CornerRadius=UDim.new(0,4),Parent=btn});local function fc()if p.Callback then pcall(p.Callback,b.Text)end end;b.FocusLost:Connect(function(e)if e then fc()end end);btn.MouseButton1Click:Connect(fc);function o:GetText()return b.Text end;function o:SetText(t)b.Text=t end;return o end
-    function self:AddSlider(p) local f=self:AddElement(45);local o={};local min,max,val=p.Min or 0,p.Max or 100,p.Default or 50;local l=Create("TextLabel",{Size=UDim2.new(1,0,0,20),Text=(p.Text or"Slider")..": "..math.floor(val),Font=Theme.Font,TextSize=Theme.TextSize,TextColor3=Theme.Text,TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,Parent=f});local t=Create("Frame",{Name="Track",Size=UDim2.new(1,0,0,6),Position=UDim2.new(0,0,0,25),BackgroundColor3=Theme.Header,Parent=f});Create("UICorner",{Parent=t});local pr=Create("Frame",{Name="Progress",Size=UDim2.new((val-min)/(max-min),0,1,0),BackgroundColor3=Theme.Accent2,Parent=t});Create("UICorner",{Parent=pr});local h=Create("Frame",{Name="Handle",Size=UDim2.new(0,12,0,12),Position=UDim2.new(1,0,0.5,0),AnchorPoint=Vector2.new(0.5,0.5),BackgroundColor3=Theme.Text,Parent=pr});Create("UICorner",{CornerRadius=UDim.new(1,0),Parent=h});local drag=false;local function u(i)local pos=i.Position.X-t.AbsolutePosition.X;local perc=math.clamp(pos/t.AbsoluteSize.X,0,1);val=min+(max-min)*perc;if p.Callback then pcall(p.Callback,val)end;Animate(pr,{Size=UDim2.new(perc,0,1,0)},0.05);l.Text=(p.Text or"Slider")..": "..math.floor(val)end;t.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=true;u(i);local c;c=UserInputService.InputEnded:Connect(function(e)if e.UserInputType==Enum.UserInputType.MouseButton1 then drag=false;c:Disconnect()end end)end end);t.InputChanged:Connect(function(i)if drag and i.UserInputType==Enum.UserInputType.MouseMovement then u(i)end end);return o end
+    
+    function self:AddSlider(props)
+        local frame = self:AddElement(45); local obj = {}
+        local min, max, val = props.Min or 0, props.Max or 100, props.Default or 50
+        local label = Create("TextLabel", {Size=UDim2.new(1,0,0,20), Text=(props.Text or "Slider")..": "..math.floor(val), Font=Theme.Font, TextSize=Theme.TextSize, TextColor3=Theme.Text, TextXAlignment=Enum.TextXAlignment.Left, BackgroundTransparency=1, Parent=frame})
+        local track = Create("Frame", {Name="Track", Size=UDim2.new(1,0,0,6), Position=UDim2.new(0,0,0,25), BackgroundColor3=Theme.Header, Parent=frame}); Create("UICorner",{Parent=track})
+        local progress = Create("Frame", {Name="Progress", Size=UDim2.new((val-min)/(max-min), 0, 1, 0), BackgroundColor3=Theme.Accent2, Parent=track}); Create("UICorner",{Parent=progress})
+        local handle = Create("Frame", {Name="Handle", Size=UDim2.new(0,12,0,12), Position=UDim2.new(1,0,0.5,0), AnchorPoint=Vector2.new(0.5,0.5), BackgroundColor3=Theme.Text, Parent=progress}); Create("UICorner",{CornerRadius=UDim.new(1,0), Parent=handle})
+        local dragging = false
+        local function UpdateSlider(inputPos)
+            local relativeX = inputPos.X - track.AbsolutePosition.X
+            local percentage = math.clamp(relativeX / track.AbsoluteSize.X, 0, 1)
+            val = min + (max - min) * percentage
+            Animate(progress, {Size = UDim2.new(percentage, 0, 1, 0)}, 0.05)
+            label.Text = (props.Text or "Slider")..": "..math.floor(val)
+            if props.Callback then pcall(props.Callback, val) end
+        end
+        track.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging=true; UpdateSlider(input.Position); local conn; conn=UserInputService.InputEnded:Connect(function(endInput) if endInput.UserInputType == Enum.UserInputType.MouseButton1 then dragging=false; conn:Disconnect() end end) end end)
+        track.InputChanged:Connect(function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then UpdateSlider(input.Position) end end)
+        return obj
+    end
 
     function self:AddDropdown(props)
         local frame = self:AddElement(35); frame.ClipsDescendants = false; frame.ZIndex = #self.CurrentTab.Frame:GetChildren()
@@ -125,18 +146,19 @@ function Library.new(props)
         local arrow = Create("TextLabel", {Name="Arrow", Size=UDim2.new(0,30,1,0), Position=UDim2.new(1,-30,0,0), BackgroundTransparency=1, Font=Theme.BoldFont, Text="▼", TextColor3=Theme.Text, TextSize=12, Parent=mainBtn})
         local optionsFrame = Create("Frame", {Name="Options", Size=UDim2.new(1,0,0,0), Position=UDim2.new(0,0,1,5), BackgroundColor3=Theme.Background, BackgroundTransparency=0.1, BorderSizePixel=0, ClipsDescendants=true, Visible=false, Parent=frame}); Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=optionsFrame}); Create("UIStroke", {Color=Theme.Accent, Parent=optionsFrame}); Create("UIListLayout", {Padding=UDim.new(0,4), Parent=optionsFrame})
         
+        local function CloseDropdown()
+            isOpen = false; Animate(arrow, {Rotation = 0}); self.CurrentTab.Frame.ScrollingEnabled = true
+            local anim = Animate(optionsFrame, {Size=UDim2.new(1,0,0,0)}, 0.2); anim.Completed:Connect(function() optionsFrame.Visible=false end)
+        end
         for _, optionText in ipairs(props.Options or {}) do
             local optBtn = Create("TextButton", {Name=optionText, Size=UDim2.new(1,0,0,28), Text="  "..optionText, Font=Theme.Font, TextSize=Theme.TextSize-1, TextColor3=Theme.Text, BackgroundColor3=Theme.Header, TextXAlignment=Enum.TextXAlignment.Left, AutoButtonColor=false, Parent=optionsFrame})
             optBtn.MouseEnter:Connect(function() Animate(optBtn, {BackgroundColor3 = Theme.Accent}, 0.1) end); optBtn.MouseLeave:Connect(function() Animate(optBtn, {BackgroundColor3 = Theme.Header}, 0.1) end)
-            optBtn.MouseButton1Click:Connect(function()
-                isOpen = false; mainBtn.Text = "  "..optionText; Animate(arrow, {Rotation = 0}); local anim = Animate(optionsFrame, {Size=UDim2.new(1,0,0,0)}, 0.2); anim.Completed:Connect(function() optionsFrame.Visible=false end); if props.Callback then pcall(props.Callback, optionText) end
-            end)
+            optBtn.MouseButton1Click:Connect(function() mainBtn.Text = "  "..optionText; CloseDropdown(); if props.Callback then pcall(props.Callback, optionText) end end)
         end
-
         mainBtn.MouseButton1Click:Connect(function()
             isOpen = not isOpen; Animate(arrow, {Rotation = isOpen and 180 or 0})
-            if isOpen then optionsFrame.Visible=true; Animate(optionsFrame, {Size=UDim2.new(1,0,0, #props.Options * 32 + 4)}, 0.2)
-            else local anim = Animate(optionsFrame, {Size=UDim2.new(1,0,0,0)}, 0.2); anim.Completed:Connect(function() optionsFrame.Visible=false end) end
+            if isOpen then self.CurrentTab.Frame.ScrollingEnabled = false; optionsFrame.Visible=true; Animate(optionsFrame, {Size=UDim2.new(1,0,0, #props.Options * 32 + 4)}, 0.2)
+            else CloseDropdown() end
         end)
         return obj
     end
