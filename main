@@ -1,10 +1,10 @@
 --[[
-    GlitchizUI v3.9 (Definitive Version)
-    - FIXED: Header now uses a higher ZIndex than the content, guaranteeing Hide/Show/Delete buttons are always clickable.
+    GlitchizUI v4.0 (Production Version)
+    - FIXED: Tab content parenting logic rebuilt. All elements now appear in their correct tabs.
+    - FIXED: Dropdown now uses a higher ZIndex to prevent its content from fusing with other UI elements.
     - FIXED: The ContentFrame now clips its descendants, so scrolling content no longer goes outside its boundaries.
-    - FIXED: The first tab created in the script is now correctly displayed on load, not the last.
-    - NEW: Tab list is a ScrollingFrame, allowing for unlimited tabs.
-    - FIXED: Slider logic is robust and will not get stuck.
+    - FIXED: The first tab created in the script is now correctly displayed on load.
+    - FIXED: Header buttons are 100% clickable due to proper ZIndex layering.
 --]]
 
 local RunService = game:GetService("RunService")
@@ -102,21 +102,22 @@ function Library.new(props)
         Tab.Frame = Create("ScrollingFrame", { Name = name .. "_Content", Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, BorderSizePixel = 0, CanvasSize = UDim2.new(0, 0, 0, 0), ScrollBarImageColor3 = Theme.Accent2, ScrollBarThickness = 4, Parent = self.ContentFrame, Visible = false }); Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Left, Parent = Tab.Frame }); Create("UIPadding", {PaddingTop = UDim.new(0, 15), PaddingLeft = UDim.new(0, 15), Parent = Tab.Frame})
         
         Tab.Button.MouseButton1Click:Connect(function()
-            if self.CurrentTab == Tab or isTweeningTab then return end; isTweeningTab = true
-            local oldTab = self.CurrentTab
+            if self.ActiveTab == Tab or isTweeningTab then return end; isTweeningTab = true
+            local oldTab = self.ActiveTab
             if oldTab then oldTab.Button.BackgroundColor3 = Theme.Header; oldTab.Indicator.Visible = false; Animate(oldTab.Frame, {Position = UDim2.new(-1, 0, 0, 0)}, 0.2) end
             Tab.Frame.Position = UDim2.new(1, 0, 0, 0); Tab.Frame.Visible = true; Tab.Button.BackgroundColor3 = Theme.Accent; Tab.Indicator.Visible = true
             Animate(Tab.Frame, {Position = UDim2.new(0, 0, 0, 0)}, 0.2).Completed:Wait(); if oldTab then oldTab.Frame.Visible = false end
-            self.CurrentTab = Tab; isTweeningTab = false
+            self.ActiveTab = Tab; isTweeningTab = false
         end)
         
-        if not self.CurrentTab then
-            Tab.Button.BackgroundColor3 = Theme.Accent; Tab.Indicator.Visible = true; Tab.Frame.Visible = true; Tab.Frame.Position = UDim2.new(0,0,0,0); self.CurrentTab = Tab
+        if not self.ActiveTab then
+            Tab.Button.BackgroundColor3 = Theme.Accent; Tab.Indicator.Visible = true; Tab.Frame.Visible = true; Tab.Frame.Position = UDim2.new(0,0,0,0); self.ActiveTab = Tab
         end
+        self.CurrentTabForCreation = Tab
         self.Tabs[name] = Tab; return self
     end
     
-    function self:AddElement(height) if not self.CurrentTab then warn("GlitchizUI: No tab created."); return end; local tab = self.CurrentTab; local elFrame = Create("Frame", { Size = UDim2.new(1, -30, 0, height), BackgroundTransparency = 1, LayoutOrder = tab.ElementOffset, Parent = tab.Frame }); tab.ElementOffset = tab.ElementOffset + height + 10; tab.Frame.CanvasSize = UDim2.new(0, 0, 0, tab.ElementOffset); return elFrame end
+    function self:AddElement(height) if not self.CurrentTabForCreation then warn("GlitchizUI: No tab created."); return end; local tab = self.CurrentTabForCreation; local elFrame = Create("Frame", { Size = UDim2.new(1, -30, 0, height), BackgroundTransparency = 1, LayoutOrder = tab.ElementOffset, Parent = tab.Frame }); tab.ElementOffset = tab.ElementOffset + height + 10; tab.Frame.CanvasSize = UDim2.new(0, 0, 0, tab.ElementOffset); return elFrame end
     function self:AddLabel(p) local f=self:AddElement(20); local l=Create("TextLabel",{Size=UDim2.new(1,0,1,0),Text=p.Text or "Label",Font=p.Bold and Theme.BoldFont or Theme.Font,TextSize=p.Big and Theme.TextSize+4 or Theme.TextSize,TextColor3=p.Color or Theme.Text,TextXAlignment=Enum.TextXAlignment.Left,BackgroundTransparency=1,Parent=f}); local o={}; function o:Set(t)l.Text=t end; return o end
     function self:AddDivider() local f=self:AddElement(8);Create("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0.5,0,0.5,0),AnchorPoint=Vector2.new(0.5,0.5),BackgroundColor3=Theme.Accent,BackgroundTransparency=0.5,BorderSizePixel=0,Parent=f})end
     function self:AddButton(p) local f=self:AddElement(35);local b=Create("TextButton",{Name="Button",Size=UDim2.new(1,0,1,0),Text=p.Text or "Button",Font=Theme.Font,TextSize=Theme.TextSize,TextColor3=Theme.Text,BackgroundColor3=Theme.Header,Parent=f});Create("UICorner",{CornerRadius=UDim.new(0,4),Parent=b});local s=Create("UIStroke",{Color=Theme.Accent,Parent=b});if p.Callback then b.MouseButton1Click:Connect(function()pcall(p.Callback)end)end;b.MouseEnter:Connect(function()Animate(s,{Color=Theme.Accent2})end);b.MouseLeave:Connect(function()Animate(s,{Color=Theme.Accent})end);return{}end
@@ -163,14 +164,14 @@ function Library.new(props)
     end
 
     function self:AddDropdown(props)
-        local frame = self:AddElement(35); frame.ClipsDescendants = false; frame.ZIndex = #self.CurrentTab.Frame:GetChildren()
+        local frame = self:AddElement(35); frame.ClipsDescendants = false; frame.ZIndex = 2
         local obj = {}; local isOpen = false
         local mainBtn = Create("TextButton", {Name="DropdownMain", Size=UDim2.new(1,0,1,0), Text="  ".. (props.Default or "Select an Option"), Font=Theme.Font, TextSize=Theme.TextSize, TextColor3=Theme.Text, BackgroundColor3=Theme.Header, TextXAlignment=Enum.TextXAlignment.Left, Parent=frame}); Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=mainBtn}); local str=Create("UIStroke", {Color=Theme.Accent, Parent=mainBtn})
         local arrow = Create("TextLabel", {Name="Arrow", Size=UDim2.new(0,30,1,0), Position=UDim2.new(1,-30,0,0), BackgroundTransparency=1, Font=Theme.BoldFont, Text="▼", TextColor3=Theme.Text, TextSize=12, Parent=mainBtn})
-        local optionsFrame = Create("Frame", {Name="Options", Size=UDim2.new(1,0,0,0), Position=UDim2.new(0,0,1,5), BackgroundColor3=Theme.Background, BackgroundTransparency=0.1, BorderSizePixel=0, ClipsDescendants=true, Visible=false, Parent=frame}); Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=optionsFrame}); Create("UIStroke", {Color=Theme.Accent, Parent=optionsFrame}); Create("UIListLayout", {Padding=UDim.new(0,4), Parent=optionsFrame})
+        local optionsFrame = Create("Frame", {Name="Options", Size=UDim2.new(1,0,0,0), Position=UDim2.new(0,0,1,5), BackgroundColor3=Theme.Background, BackgroundTransparency=0.1, BorderSizePixel=0, ClipsDescendants=true, Visible=false, ZIndex = 10, Parent=frame}); Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=optionsFrame}); Create("UIStroke", {Color=Theme.Accent, Parent=optionsFrame}); Create("UIListLayout", {Padding=UDim.new(0,4), Parent=optionsFrame})
         
         local function CloseDropdown()
-            isOpen = false; Animate(arrow, {Rotation = 0}); self.CurrentTab.Frame.ScrollingEnabled = true
+            isOpen = false; Animate(arrow, {Rotation = 0}); self.ActiveTab.Frame.ScrollingEnabled = true
             local anim = Animate(optionsFrame, {Size=UDim2.new(1,0,0,0)}, 0.2); anim.Completed:Connect(function() optionsFrame.Visible=false end)
         end
         for _, optionText in ipairs(props.Options or {}) do
@@ -180,7 +181,7 @@ function Library.new(props)
         end
         mainBtn.MouseButton1Click:Connect(function()
             isOpen = not isOpen; Animate(arrow, {Rotation = isOpen and 180 or 0})
-            if isOpen then self.CurrentTab.Frame.ScrollingEnabled = false; optionsFrame.Visible=true; Animate(optionsFrame, {Size=UDim2.new(1,0,0, #props.Options * 32 + 4)}, 0.2)
+            if isOpen then self.ActiveTab.Frame.ScrollingEnabled = false; optionsFrame.Visible=true; Animate(optionsFrame, {Size=UDim2.new(1,0,0, #props.Options * 32 + 4)}, 0.2)
             else CloseDropdown() end
         end)
         return obj
