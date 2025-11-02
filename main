@@ -1,10 +1,8 @@
 --[[
-    GlitchizUI v5.0 (The Definitive Refactor)
-    - Complete ground-up rewrite for stability, simplicity, and a "Rayfield-like" developer experience.
-    - NEW: Creating UI is now object-oriented. Window:AddTab("Name") returns a Tab object, and you call methods like Tab:AddButton(). This fixes all content parenting issues.
-    - FIXED: Dropdown was completely rebuilt. It is now scrollable, correctly sized, and uses ZIndex to appear cleanly on top of other elements.
-    - FIXED: The main content area of every tab is now guaranteed to be scrollable.
-    - FIXED: All layout, alignment, and header button issues have been resolved at an architectural level.
+    GlitchizUI v5.1 (The Definitive Refactor)
+    - FIXED: Dropdown was completely rebuilt using a professional ZIndex layering method. It no longer pushes content down but appears cleanly OVER it.
+    - FIXED: The dropdown is now fully scrollable and correctly sized.
+    - This is the definitive, stable build incorporating all previous bug fixes.
 --]]
 
 local Library = {}
@@ -93,7 +91,7 @@ function Library.new(properties)
     Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.MainFrame }); Create("UIStroke", { Color = Theme.Accent2, Transparency = 0.7, Thickness = 1.5, Parent = self.MainFrame })
 
     -- // Create Header (ZIndex 2 to always be on top)
-    local header = Create("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = Theme.Header, BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 2, Parent = self.MainFrame })
+    local header = Create("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = Theme.Header, BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 3, Parent = self.MainFrame })
     local dragFrame = Create("Frame", {Name = "DragFrame", Size = UDim2.new(1, -60, 1, 0), BackgroundTransparency = 1, Parent = header})
     Create("TextLabel", { Name = "Title", Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = dragFrame })
     
@@ -188,12 +186,11 @@ function Library.new(properties)
         -- // Element Creation Methods for this Tab object
         local elementMethods = {}
         
-        local function AddElement(height, isDropdown)
+        local function AddElement(height)
             local elementFrame = Create("Frame", {
                 Size = UDim2.new(1, -30, 0, height),
                 BackgroundTransparency = 1,
                 LayoutOrder = #Tab.ContentFrame:GetChildren(),
-                ClipsDescendants = not isDropdown,
                 Parent = Tab.ContentFrame
             })
             task.wait() -- Let the layout update before calculating canvas size
@@ -269,7 +266,10 @@ function Library.new(properties)
         end
 
         function elementMethods:AddDropdown(dropdownProps)
-            local frame = AddElement(35, true) -- Pass 'true' to disable clipping
+            local frame = AddElement(35)
+            frame.ClipsDescendants = false
+            frame.ZIndex = 2
+            
             local isOpen = false
             local maxDropdownHeight = 150
             local optionHeight = 32
@@ -278,14 +278,32 @@ function Library.new(properties)
 
             local mainButton = Create("TextButton", {Name="DropdownMain", Size=UDim2.new(1,0,1,0), Text="  ".. (dropdownProps.Default or "Select an Option"), Font=Theme.Font, TextSize=Theme.TextSize, TextColor3=Theme.Text, BackgroundColor3=Theme.Header, TextXAlignment=Enum.TextXAlignment.Left, Parent=frame}); Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=mainButton}); Create("UIStroke", {Color=Theme.Accent, Parent=mainButton})
             local arrow = Create("TextLabel", {Name="Arrow", Size=UDim2.new(0,30,1,0), Position=UDim2.new(1,-30,0,0), BackgroundTransparency=1, Font=Theme.BoldFont, Text="▼", TextColor3=Theme.Text, TextSize=12, Parent=mainButton})
-            local optionsContainer = Create("ScrollingFrame", {Name="Options", Size=UDim2.new(1,0,0,0), Position=UDim2.new(0,0,1,5), BackgroundColor3=Theme.Background, BackgroundTransparency=0.1, BorderSizePixel=0, ClipsDescendants=true, Visible=false, CanvasSize=UDim2.new(0,0,0, (totalOptionsHeight / 28 * 32)), ScrollBarImageColor3=Theme.Accent2, ScrollBarThickness=4, ZIndex = 10, Parent=frame}); Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=optionsContainer}); Create("UIStroke", {Color=Theme.Accent, Parent=optionsContainer});
+            
+            -- Parent the options container to the tab's content frame to allow it to float over other elements
+            local optionsContainer = Create("ScrollingFrame", {
+                Name="Options", 
+                Size=UDim2.new(frame.Size.X.Scale, frame.Size.X.Offset, 0, 0), 
+                Position=UDim2.new(frame.Position.X.Scale, frame.Position.X.Offset, frame.Position.Y.Scale, frame.Position.Y.Offset + frame.AbsoluteSize.Y + 5),
+                BackgroundColor3=Theme.Background, 
+                BackgroundTransparency=0.1, 
+                BorderSizePixel=0, 
+                ClipsDescendants=true, 
+                Visible=false, 
+                CanvasSize=UDim2.new(0,0,0, (totalOptionsHeight / 28 * 32)), 
+                ScrollBarImageColor3=Theme.Accent2, 
+                ScrollBarThickness=4, 
+                ZIndex = 10, -- High ZIndex to ensure it's on top
+                Parent=Tab.ContentFrame
+            })
+            Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=optionsContainer}); Create("UIStroke", {Color=Theme.Accent, Parent=optionsContainer});
             local listLayout = Create("UIListLayout", {Padding=UDim.new(0,4), HorizontalAlignment=Enum.HorizontalAlignment.Stretch, Parent=optionsContainer})
             Create("UIPadding", {PaddingLeft=UDim.new(0,4), PaddingRight=UDim.new(0,4), Parent=optionsContainer})
             
             local function CloseDropdown()
-                isOpen = false; Animate(arrow, {Rotation = 0}); 
-                Animate(frame, {Size = UDim2.new(1, -30, 0, 35)}, 0.2)
-                local anim = Animate(optionsContainer, {Size=UDim2.new(1,0,0,0)}, 0.2); anim.Completed:Connect(function() optionsContainer.Visible=false end)
+                isOpen = false
+                Animate(arrow, {Rotation = 0}) 
+                local anim = Animate(optionsContainer, {Size=UDim2.new(frame.Size.X.Scale, frame.Size.X.Offset, 0, 0)}, 0.2)
+                anim.Completed:Connect(function() optionsContainer.Visible = false end)
             end
             
             for _, optionText in ipairs(dropdownProps.Options or {}) do
@@ -297,12 +315,19 @@ function Library.new(properties)
             end
             
             mainButton.MouseButton1Click:Connect(function()
-                isOpen = not isOpen; Animate(arrow, {Rotation = isOpen and 180 or 0})
+                isOpen = not isOpen
+                Animate(arrow, {Rotation = isOpen and 180 or 0})
+                
+                -- Update position right before opening
+                optionsContainer.Position = UDim2.new(frame.Position.X.Scale, frame.Position.X.Offset, frame.Position.Y.Scale, frame.Position.Y.Offset + frame.AbsoluteSize.Y + 5)
+                optionsContainer.Size = UDim2.new(frame.Size.X.Scale, frame.Size.X.Offset, 0, 0)
+                
                 if isOpen then 
                     optionsContainer.Visible=true
-                    Animate(frame, {Size = UDim2.new(1, -30, 0, 35 + visibleOptionsHeight + 5)}, 0.2)
-                    Animate(optionsContainer, {Size=UDim2.new(1,0,0,visibleOptionsHeight)}, 0.2)
-                else CloseDropdown() end
+                    Animate(optionsContainer, {Size=UDim2.new(frame.Size.X.Scale, frame.Size.X.Offset, 0, visibleOptionsHeight)}, 0.2)
+                else 
+                    CloseDropdown() 
+                end
             end)
             return {}
         end
