@@ -90,7 +90,7 @@ function Library.new(properties)
     self.MainFrame = Create("Frame", { Name = "MainFrame", Size = self.Size, Position = properties.Position or UDim2.new(0.5, -self.Size.X.Offset / 2, 0.5, -self.Size.Y.Offset / 2), BackgroundColor3 = Theme.Background, BackgroundTransparency = 0.15, BorderSizePixel = 0, Parent = self.ScreenGui })
     Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.MainFrame }); Create("UIStroke", { Color = Theme.Accent2, Transparency = 0.7, Thickness = 1.5, Parent = self.MainFrame })
 
-    -- // Create Header (ZIndex 2 to always be on top)
+    -- // Create Header (ZIndex 3 to be on top of everything)
     local header = Create("Frame", { Name = "Header", Size = UDim2.new(1, 0, 0, 40), BackgroundColor3 = Theme.Header, BackgroundTransparency = 0.2, BorderSizePixel = 0, ZIndex = 3, Parent = self.MainFrame })
     local dragFrame = Create("Frame", {Name = "DragFrame", Size = UDim2.new(1, -60, 1, 0), BackgroundTransparency = 1, Parent = header})
     Create("TextLabel", { Name = "Title", Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = self.Title, Font = Theme.BoldFont, TextSize = Theme.TextSize + 4, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, Parent = dragFrame })
@@ -200,10 +200,8 @@ function Library.new(properties)
 
         function elementMethods:AddLabel(labelProps) 
             local frame = AddElement(20)
-            local label = Create("TextLabel",{Size = UDim2.new(1,0,1,0),Text = labelProps.Text or "Label",Font = labelProps.Bold and Theme.BoldFont or Theme.Font,TextSize = labelProps.Big and Theme.TextSize + 4 or Theme.TextSize,TextColor3 = labelProps.Color or Theme.Text,TextXAlignment = Enum.TextXAlignment.Left,BackgroundTransparency = 1,Parent = frame})
-            local labelObject = {}
-            function labelObject:Set(newText) label.Text = newText end
-            return labelObject
+            Create("TextLabel",{Size = UDim2.new(1,0,1,0),Text = labelProps.Text or "Label",Font = labelProps.Bold and Theme.BoldFont or Theme.Font,TextSize = labelProps.Big and Theme.TextSize + 4 or Theme.TextSize,TextColor3 = labelProps.Color or Theme.Text,TextXAlignment = Enum.TextXAlignment.Left,BackgroundTransparency = 1,Parent = frame})
+            return {}
         end
 
         function elementMethods:AddDivider() 
@@ -239,16 +237,13 @@ function Library.new(properties)
 
         function elementMethods:AddTextbox(textboxProps) 
             local frame = AddElement(35)
-            local textboxObject = {}
             local boxFrame = Create("Frame", {Size=UDim2.new(1,0,1,0), BackgroundColor3=Theme.Header, Parent=frame}); Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=boxFrame}); Create("UIStroke", {Color=Theme.Accent, Parent=boxFrame})
             local textbox = Create("TextBox", {Name="Textbox", Size=UDim2.new(1,-85,1,0), Position=UDim2.new(0,5,0,0), Text=textboxProps.Default or"", PlaceholderText=textboxProps.Placeholder or"...", Font=Theme.Font, TextSize=Theme.TextSize, TextColor3=Theme.Text, BackgroundTransparency=1, ClearTextOnFocus=textboxProps.ClearOnFocus or false, Parent=boxFrame})
             local submitButton = Create("TextButton", {Name="Submit", Size=UDim2.new(0,70,0.8,0), Position=UDim2.new(1,-75,0.1,0), Text=textboxProps.ButtonText or"Submit", Font=Theme.Font, TextSize=Theme.TextSize-1, TextColor3=Theme.Text, BackgroundColor3=Theme.Accent, Parent=boxFrame}); Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=submitButton})
             local function FireCallback() if textboxProps.Callback then pcall(textboxProps.Callback, textbox.Text) end end
             textbox.FocusLost:Connect(function(enterPressed) if enterPressed then FireCallback() end end)
             submitButton.MouseButton1Click:Connect(FireCallback)
-            function textboxObject:GetText() return textbox.Text end
-            function textboxObject:SetText(newText) textbox.Text = newText end
-            return textboxObject
+            return {}
         end
         
         function elementMethods:AddSlider(sliderProps)
@@ -267,64 +262,62 @@ function Library.new(properties)
 
         function elementMethods:AddDropdown(dropdownProps)
             local frame = AddElement(35)
-            frame.ClipsDescendants = false
-            frame.ZIndex = 2
-            
             local isOpen = false
-            local maxDropdownHeight = 150
-            local optionHeight = 32
-            local totalOptionsHeight = #dropdownProps.Options * optionHeight
-            local visibleOptionsHeight = math.min(totalOptionsHeight, maxDropdownHeight)
-
+            
             local mainButton = Create("TextButton", {Name="DropdownMain", Size=UDim2.new(1,0,1,0), Text="  ".. (dropdownProps.Default or "Select an Option"), Font=Theme.Font, TextSize=Theme.TextSize, TextColor3=Theme.Text, BackgroundColor3=Theme.Header, TextXAlignment=Enum.TextXAlignment.Left, Parent=frame}); Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=mainButton}); Create("UIStroke", {Color=Theme.Accent, Parent=mainButton})
             local arrow = Create("TextLabel", {Name="Arrow", Size=UDim2.new(0,30,1,0), Position=UDim2.new(1,-30,0,0), BackgroundTransparency=1, Font=Theme.BoldFont, Text="▼", TextColor3=Theme.Text, TextSize=12, Parent=mainButton})
             
-            -- Parent the options container to the tab's content frame to allow it to float over other elements
-            local optionsContainer = Create("ScrollingFrame", {
-                Name="Options", 
-                Size=UDim2.new(frame.Size.X.Scale, frame.Size.X.Offset, 0, 0), 
-                Position=UDim2.new(frame.Position.X.Scale, frame.Position.X.Offset, frame.Position.Y.Scale, frame.Position.Y.Offset + frame.AbsoluteSize.Y + 5),
-                BackgroundColor3=Theme.Background, 
-                BackgroundTransparency=0.1, 
-                BorderSizePixel=0, 
-                ClipsDescendants=true, 
-                Visible=false, 
-                CanvasSize=UDim2.new(0,0,0, (totalOptionsHeight / 28 * 32)), 
-                ScrollBarImageColor3=Theme.Accent2, 
-                ScrollBarThickness=4, 
-                ZIndex = 10, -- High ZIndex to ensure it's on top
-                Parent=Tab.ContentFrame
-            })
-            Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=optionsContainer}); Create("UIStroke", {Color=Theme.Accent, Parent=optionsContainer});
-            local listLayout = Create("UIListLayout", {Padding=UDim.new(0,4), HorizontalAlignment=Enum.HorizontalAlignment.Stretch, Parent=optionsContainer})
-            Create("UIPadding", {PaddingLeft=UDim.new(0,4), PaddingRight=UDim.new(0,4), Parent=optionsContainer})
+            local optionsContainer = nil -- Lazily create this only when needed
             
             local function CloseDropdown()
+                if not optionsContainer then return end
                 isOpen = false
                 Animate(arrow, {Rotation = 0}) 
-                local anim = Animate(optionsContainer, {Size=UDim2.new(frame.Size.X.Scale, frame.Size.X.Offset, 0, 0)}, 0.2)
-                anim.Completed:Connect(function() optionsContainer.Visible = false end)
-            end
-            
-            for _, optionText in ipairs(dropdownProps.Options or {}) do
-                local optionButton = Create("TextButton", {Name=optionText, Size=UDim2.new(1,0,0,28), Text="  "..optionText, Font=Theme.Font, TextSize=Theme.TextSize-1, TextColor3=Theme.Text, BackgroundColor3=Theme.Header, TextXAlignment=Enum.TextXAlignment.Left, AutoButtonColor=false, Parent=optionsContainer})
-                Create("UICorner", {CornerRadius=UDim.new(0,2), Parent=optionButton})
-                optionButton.MouseEnter:Connect(function() Animate(optionButton, {BackgroundColor3 = Theme.Accent}, 0.1) end)
-                optionButton.MouseLeave:Connect(function() Animate(optionButton, {BackgroundColor3 = Theme.Header}, 0.1) end)
-                optionButton.MouseButton1Click:Connect(function() mainButton.Text = "  "..optionText; CloseDropdown(); if dropdownProps.Callback then pcall(dropdownProps.Callback, optionText) end end)
+                local anim = Animate(optionsContainer, {Size=UDim2.new(optionsContainer.Size.X.Scale, optionsContainer.Size.X.Offset, 0, 0)}, 0.2)
+                anim.Completed:Connect(function() if optionsContainer then optionsContainer.Visible = false end end)
             end
             
             mainButton.MouseButton1Click:Connect(function()
+                if not optionsContainer then -- First time opening, create the options
+                    local maxDropdownHeight = 150
+                    local optionHeight = 32
+                    local totalOptionsHeight = #dropdownProps.Options * optionHeight
+                    local visibleOptionsHeight = math.min(totalOptionsHeight, maxDropdownHeight)
+
+                    optionsContainer = Create("ScrollingFrame", {
+                        Name="Options", 
+                        Size=UDim2.new(frame.AbsoluteSize.X, 0, 0, 0), 
+                        Position=UDim2.fromOffset(frame.AbsolutePosition.X, frame.AbsolutePosition.Y + frame.AbsoluteSize.Y + 5),
+                        BackgroundColor3=Theme.Background, 
+                        BackgroundTransparency=0.1, 
+                        BorderSizePixel=0, 
+                        ClipsDescendants=true, 
+                        Visible=false, 
+                        CanvasSize=UDim2.new(0,0,0, totalOptionsHeight), 
+                        ScrollBarImageColor3=Theme.Accent2, 
+                        ScrollBarThickness=4, 
+                        ZIndex = 10, -- High ZIndex to ensure it's on top
+                        Parent=self.ScreenGui -- Parent to ScreenGui to float over everything
+                    })
+                    Create("UICorner", {CornerRadius=UDim.new(0,4), Parent=optionsContainer}); Create("UIStroke", {Color=Theme.Accent, Parent=optionsContainer});
+                    local listLayout = Create("UIListLayout", {Padding=UDim.new(0,4), HorizontalAlignment=Enum.HorizontalAlignment.Stretch, Parent=optionsContainer})
+                    Create("UIPadding", {PaddingLeft=UDim.new(0,4), PaddingRight=UDim.new(0,4), Parent=optionsContainer})
+
+                    for _, optionText in ipairs(dropdownProps.Options or {}) do
+                        local optionButton = Create("TextButton", {Name=optionText, Size=UDim2.new(1,0,0,28), Text="  "..optionText, Font=Theme.Font, TextSize=Theme.TextSize-1, TextColor3=Theme.Text, BackgroundColor3=Theme.Header, TextXAlignment=Enum.TextXAlignment.Left, AutoButtonColor=false, Parent=optionsContainer})
+                        Create("UICorner", {CornerRadius=UDim.new(0,2), Parent=optionButton})
+                        optionButton.MouseEnter:Connect(function() Animate(optionButton, {BackgroundColor3 = Theme.Accent}, 0.1) end)
+                        optionButton.MouseLeave:Connect(function() Animate(optionButton, {BackgroundColor3 = Theme.Header}, 0.1) end)
+                        optionButton.MouseButton1Click:Connect(function() mainButton.Text = "  "..optionText; CloseDropdown(); if dropdownProps.Callback then pcall(dropdownProps.Callback, optionText) end end)
+                    end
+                end
+                
                 isOpen = not isOpen
                 Animate(arrow, {Rotation = isOpen and 180 or 0})
                 
-                -- Update position right before opening
-                optionsContainer.Position = UDim2.new(frame.Position.X.Scale, frame.Position.X.Offset, frame.Position.Y.Scale, frame.Position.Y.Offset + frame.AbsoluteSize.Y + 5)
-                optionsContainer.Size = UDim2.new(frame.Size.X.Scale, frame.Size.X.Offset, 0, 0)
-                
                 if isOpen then 
                     optionsContainer.Visible=true
-                    Animate(optionsContainer, {Size=UDim2.new(frame.Size.X.Scale, frame.Size.X.Offset, 0, visibleOptionsHeight)}, 0.2)
+                    Animate(optionsContainer, {Size=UDim2.new(frame.AbsoluteSize.X, 0, 0, math.min(#dropdownProps.Options * 32, 150))}, 0.2)
                 else 
                     CloseDropdown() 
                 end
